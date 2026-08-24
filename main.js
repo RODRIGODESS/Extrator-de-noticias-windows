@@ -2,7 +2,9 @@ const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-const motor = require('./engine/extrator-materia-v1.25.1.js');
+// V1.25.10 usa uma camada de correções sobre o motor V1.25.1.
+// O arquivo original permanece preservado e pode ser reutilizado sem alterações.
+const motor = require('./engine/extrator-materia-v1.25.10.js');
 
 const PASTA_NOME = 'ExtratorMaterias';
 const ARQUIVO_ULTIMO = 'materia-extraida.txt';
@@ -82,7 +84,7 @@ async function extrairMateriaGUI(opcoes) {
   extractionBusy = true;
   try {
     const conexao = configurarConexao(opcoes || {});
-    status(`${conexao.descricao}. Lendo e limpando a matéria com o motor V1.25.1...`);
+    status(`${conexao.descricao}. Lendo e limpando a matéria com o motor ${motor.VERSAO}...`);
 
     const materia = await motor.extrairMateria(url);
 

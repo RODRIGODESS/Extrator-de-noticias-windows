@@ -4,7 +4,7 @@ const path = require('path');
 
 // V1.25.10 usa uma camada de correções sobre o motor V1.25.1.
 // O arquivo original permanece preservado e pode ser reutilizado sem alterações.
-const motor = require('./engine/extrator-materia-v1.25.10.js');
+const motor = require('./engine/extrator-materia-v1.25.10-runtime.js');
 
 const PASTA_NOME = 'ExtratorMaterias';
 const ARQUIVO_ULTIMO = 'materia-extraida.txt';

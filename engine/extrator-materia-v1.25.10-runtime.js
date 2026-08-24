@@ -1,7 +1,7 @@
 const camada = require('./extrator-materia-v1.25.10.js');
 const { recuperarCorpoCompletoG1 } = require('./correcoes-g1-v1.25.10.js');
 
-const VERSAO = '1.25.10-CORRECOES-FONTES-G1-CORPO-COMPLETO';
+const VERSAO = '1.25.10-CORRECOES-FONTES-G1-CORPO-LITERAL-HOTFIX';
 
 function formatar(m) {
   const p = [m.url, '', m.veiculo, '', `*${m.titulo || 'Título não identificado'}*`];
@@ -16,11 +16,9 @@ function formatar(m) {
 async function extrairMateria(url) {
   const materia = await camada.extrairMateria(url);
 
-  // Correção específica do G1: o motor-base pode encontrar um módulo
-  // "Agora no g1" antes do fim do conteúdo e encerrar a limpeza cedo.
-  // A segunda leitura usa apenas os blocos oficiais content-text__container
-  // da própria matéria e substitui o corpo somente quando há evidência forte
-  // de que se trata do mesmo texto jornalístico.
+  // G1: a recuperação complementar é conservadora. Ela nunca substitui o
+  // corpo por resumo/card; apenas acrescenta parágrafos literais que estejam
+  // depois do último parágrafo já extraído no corpo principal da notícia.
   await recuperarCorpoCompletoG1(materia, camada);
 
   if (!materia.texto) throw new Error('O corpo da matéria ficou vazio após as correções.');

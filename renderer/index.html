@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extrator de Matérias V1.25.9</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="cabecalho">
+      <div>
+        <h1>Extrator de Matérias</h1>
+        <div id="versao" class="versao">Motor V1.25.1</div>
+      </div>
+    </header>
+
+    <textarea id="url" rows="3" placeholder="Cole o link da matéria" spellcheck="false"></textarea>
+
+    <details class="rede">
+      <summary>Conexão / Proxy</summary>
+      <label class="check"><input id="usarProxy" type="checkbox" /> Usar proxy corporativo</label>
+      <div id="camposProxy" class="campos-proxy oculto">
+        <input id="usuario" type="text" autocomplete="username" placeholder="Usuário do proxy" />
+        <input id="senha" type="password" autocomplete="current-password" placeholder="Senha do proxy (não será salva)" />
+        <small>Servidor e porta são lidos do config-proxy.json. Usuário e senha ficam somente na memória durante a execução.</small>
+      </div>
+    </details>
+
+    <button id="extrair" class="principal">Extrair matéria</button>
+    <div id="status" class="status">Pronto para receber um link.</div>
+
+    <div class="acoes">
+      <button id="ultimo" disabled>Abrir último TXT</button>
+      <button id="historico">Abrir histórico</button>
+      <button id="pasta">Abrir pasta</button>
+    </div>
+
+    <div id="info" class="info"></div>
+    <pre id="resultado" class="resultado"></pre>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+name: Build Windows Portable
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build portable EXE
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed --name "ExtratorNoticiasPortable-V1.25.9" extrator_noticias.py
+
+      - name: Prepare portable package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item "dist/ExtratorNoticiasPortable-V1.25.9.exe" "package/ExtratorNoticiasPortable-V1.25.9.exe"
+          Copy-Item "README.md" "package/README.md"
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorNoticias-Windows-Portable-V1.25.9.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExtratorNoticias-Windows-Portable-V1.25.9
+          path: ExtratorNoticias-Windows-Portable-V1.25.9.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.25.9
+          name: Extrator de Notícias Windows Portable V1.25.9
+          body: |
+            Build automático da versão Windows Portable V1.25.9.
+            Baixe o ZIP, extraia e execute o EXE.
+          files: ExtratorNoticias-Windows-Portable-V1.25.9.zip
+          make_latest: true

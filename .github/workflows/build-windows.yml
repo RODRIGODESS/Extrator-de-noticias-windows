@@ -6,7 +6,7 @@ on:
     branches: [ "v1.25.10-correcoes-materias" ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -74,3 +74,16 @@ jobs:
           name: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE
           path: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
           if-no-files-found: error
+
+      - name: Publicar pre-release V1.25.10 TESTE
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.25.10-teste
+          target_commitish: v1.25.10-correcoes-materias
+          name: Extrator de Matérias Windows Portable V1.25.10 TESTE
+          body: |
+            Versão de teste com as primeiras correções do lote de matérias.
+            Base V1.25.9 preservada e motor V1.25.1 mantido intacto.
+            Arquivo para teste: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
+          prerelease: true
+          files: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip

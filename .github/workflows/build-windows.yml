@@ -1,9 +1,9 @@
-name: Build Windows Portable
+name: Build Windows Portable V1.25.9
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [ "main", "master" ]
 
 permissions:
   contents: write
@@ -13,48 +13,66 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Baixar projeto
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
+          node-version: '22'
 
-      - name: Install dependencies
-        shell: pwsh
+      - name: Mostrar versoes
+        shell: cmd
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          node --version
+          npm --version
 
-      - name: Build portable EXE
-        shell: pwsh
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Confirmar motor preservado
+        shell: powershell
         run: |
-          pyinstaller --noconfirm --clean --onefile --windowed --name "ExtratorNoticiasPortable-V1.25.9" extrator_noticias.py
+          if (-not (Test-Path "engine/extrator-materia-v1.25.1.js")) {
+            Write-Error "Motor V1.25.1 nao encontrado"
+            exit 1
+          }
+          Get-FileHash "engine/extrator-materia-v1.25.1.js" -Algorithm SHA256
 
-      - name: Prepare portable package
-        shell: pwsh
+      - name: Gerar EXE Portable
+        run: npm run dist
+
+      - name: Verificar executavel
+        shell: powershell
+        run: |
+          if (-not (Test-Path "dist/ExtratorNoticiasPortable-V1.25.9.exe")) {
+            Write-Error "O executavel nao foi encontrado"
+            exit 1
+          }
+          Get-Item "dist/ExtratorNoticiasPortable-V1.25.9.exe" | Format-List Name,Length,FullName
+
+      - name: Criar pacote ZIP
+        shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
           Copy-Item "dist/ExtratorNoticiasPortable-V1.25.9.exe" "package/ExtratorNoticiasPortable-V1.25.9.exe"
           Copy-Item "README.md" "package/README.md"
           Compress-Archive -Path "package/*" -DestinationPath "ExtratorNoticias-Windows-Portable-V1.25.9.zip" -Force
 
-      - name: Upload artifact
+      - name: Enviar artefato
         uses: actions/upload-artifact@v4
         with:
           name: ExtratorNoticias-Windows-Portable-V1.25.9
           path: ExtratorNoticias-Windows-Portable-V1.25.9.zip
           if-no-files-found: error
 
-      - name: Publish GitHub Release
+      - name: Publicar Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.25.9
-          name: Extrator de Notícias Windows Portable V1.25.9
+          name: Extrator de Materias Windows Portable V1.25.9
           body: |
-            Build automático da versão Windows Portable V1.25.9.
-            Baixe o ZIP, extraia e execute o EXE.
+            Versao Windows Portable preservando a estrutura Electron e o motor V1.25.1.
           files: ExtratorNoticias-Windows-Portable-V1.25.9.zip
           make_latest: true

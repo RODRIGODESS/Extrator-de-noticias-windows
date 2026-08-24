@@ -1,3 +1,0 @@
-requests==2.32.5
-beautifulsoup4==4.13.4
-pyinstaller==6.15.0

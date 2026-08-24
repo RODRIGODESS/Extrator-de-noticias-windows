@@ -1,4 +1,4 @@
-name: Build Windows Portable V1.25.9
+name: Build Windows Portable V1.25.9 CORRIGIDO
 
 on:
   workflow_dispatch:
@@ -21,58 +21,66 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Mostrar versoes
-        shell: cmd
-        run: |
-          node --version
-          npm --version
-
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar motor preservado
+      - name: Confirmar estrutura antiga preservada
         shell: powershell
         run: |
-          if (-not (Test-Path "engine/extrator-materia-v1.25.1.js")) {
-            Write-Error "Motor V1.25.1 nao encontrado"
-            exit 1
+          $arquivos = @(
+            "main.js",
+            "preload.js",
+            "renderer/index.html",
+            "renderer/renderer.js",
+            "renderer/styles.css",
+            "engine/extrator-materia-v1.25.1.js"
+          )
+          foreach ($a in $arquivos) {
+            if (-not (Test-Path $a)) {
+              Write-Error "Arquivo da estrutura antiga ausente: $a"
+              exit 1
+            }
           }
-          Get-FileHash "engine/extrator-materia-v1.25.1.js" -Algorithm SHA256
+          Select-String -Path "renderer/index.html" -Pattern "Extrator de Matérias" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Conexão / Proxy" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Abrir histórico" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Abrir pasta" -SimpleMatch
 
-      - name: Gerar EXE Portable
+      - name: Gerar EXE Portable corrigido
         run: npm run dist
 
-      - name: Verificar executavel
+      - name: Verificar executavel corrigido
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorNoticiasPortable-V1.25.9.exe")) {
-            Write-Error "O executavel nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe")) {
+            Write-Error "O executavel corrigido nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorNoticiasPortable-V1.25.9.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe" | Format-List Name,Length,FullName
 
-      - name: Criar pacote ZIP
+      - name: Criar pacote ZIP corrigido
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorNoticiasPortable-V1.25.9.exe" "package/ExtratorNoticiasPortable-V1.25.9.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe" "package/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorNoticias-Windows-Portable-V1.25.9.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO.zip" -Force
 
-      - name: Enviar artefato
+      - name: Enviar artefato corrigido
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorNoticias-Windows-Portable-V1.25.9
-          path: ExtratorNoticias-Windows-Portable-V1.25.9.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO
+          path: ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO.zip
           if-no-files-found: error
 
-      - name: Publicar Release
+      - name: Publicar Release corrigida
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.9
-          name: Extrator de Materias Windows Portable V1.25.9
+          tag_name: v1.25.9-corrigido
+          name: Extrator de Materias Windows Portable V1.25.9 CORRIGIDO
           body: |
-            Versao Windows Portable preservando a estrutura Electron e o motor V1.25.1.
-          files: ExtratorNoticias-Windows-Portable-V1.25.9.zip
+            Build corrigido usando a estrutura antiga Electron/Node.js e preservando o motor V1.25.1.
+            O executavel correto se chama ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe.
+          files: ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO.zip
           make_latest: true

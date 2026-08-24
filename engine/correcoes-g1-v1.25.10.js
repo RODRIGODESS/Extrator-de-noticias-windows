@@ -46,32 +46,79 @@ function ehRuidoG1(texto = '') {
   return false;
 }
 
+function dentroDeModuloNaoJornalistico(el) {
+  if (!el || !el.closest) return false;
+  const seletores = [
+    '[class*="resumo"]',
+    '[class*="summary"]',
+    '[class*="recommend"]',
+    '[class*="related"]',
+    '[class*="feed-post"]',
+    '[class*="mais-lidas"]',
+    '[class*="most-read"]',
+    '[data-testid*="summary"]',
+    '[data-testid*="recommend"]'
+  ];
+  return seletores.some(s => {
+    try { return !!el.closest(s); } catch (_) { return false; }
+  });
+}
+
+function escolherRaizArtigoG1(document) {
+  const seletores = [
+    'main .mc-article-body .mc-column.content-text',
+    'main .mc-article-body article',
+    'main .mc-article-body',
+    'main article',
+    'article'
+  ];
+
+  let melhor = null;
+  let melhorQtd = 0;
+  for (const s of seletores) {
+    for (const raiz of document.querySelectorAll(s)) {
+      const qtd = raiz.querySelectorAll('p.content-text__container').length;
+      if (qtd > melhorQtd) {
+        melhor = raiz;
+        melhorQtd = qtd;
+      }
+    }
+    if (melhorQtd >= 3) break;
+  }
+  return melhor;
+}
+
 function coletarBlocosG1(document, materia = {}) {
-  // O G1 mantém o texto jornalístico em content-text__container e os
-  // intertítulos em content-intertitle. Coletamos diretamente esses blocos
-  // para não depender do ponto em que o Readability encontra módulos como
-  // "Agora no g1" no meio do DOM.
-  const elementos = [...document.querySelectorAll(
-    'p.content-text__container, .content-text__container, .content-intertitle h2, .content-intertitle h3'
+  const raiz = escolherRaizArtigoG1(document);
+  if (!raiz) return [];
+
+  // IMPORTANTE: somente <p class="content-text__container"> dentro do corpo
+  // principal. A versão anterior aceitava qualquer .content-text__container,
+  // o que permitia capturar cards/resumos do portal.
+  const elementos = [...raiz.querySelectorAll(
+    'p.content-text__container, .content-intertitle h2, .content-intertitle h3'
   )];
 
   const titulo = norm(materia.titulo);
   const subtitulo = norm(materia.subtitulo);
-  const meta = new Set([titulo, subtitulo, norm(materia.autor), norm(materia.data)].filter(Boolean).map(x => x.toLocaleLowerCase('pt-BR')));
+  const meta = new Set(
+    [titulo, subtitulo, norm(materia.autor), norm(materia.data)]
+      .filter(Boolean)
+      .map(x => x.toLocaleLowerCase('pt-BR'))
+  );
+
   const saida = [];
   const vistos = new Set();
 
   for (const el of elementos) {
-    // Quando o seletor amplo pega um contêiner e também um descendente com o
-    // mesmo texto, preferimos o nó mais específico para não duplicar.
-    if (el.children.length > 8 && !/^H[23]$/.test(el.tagName || '')) continue;
+    if (dentroDeModuloNaoJornalistico(el)) continue;
 
     const t = norm(el.textContent);
     if (!t || ehRuidoG1(t)) continue;
     if (meta.has(t.toLocaleLowerCase('pt-BR'))) continue;
 
-    const intertitulo = /^H[23]$/.test(el.tagName || '') || el.closest?.('.content-intertitle');
-    if (!intertitulo && t.length < 45) continue;
+    const intertitulo = /^H[23]$/.test(el.tagName || '') || !!el.closest?.('.content-intertitle');
+    if (!intertitulo && t.length < 35) continue;
     if (intertitulo && t.length < 4) continue;
 
     const chave = t.toLocaleLowerCase('pt-BR');
@@ -83,33 +130,54 @@ function coletarBlocosG1(document, materia = {}) {
   return saida;
 }
 
-function corpoG1PareceMelhor(atual = '', blocos = []) {
-  if (blocos.length < 3) return false;
-  const textoNovo = blocos.join('\n\n');
-  const atuais = String(atual || '').split(/\n\n+/).map(norm).filter(Boolean);
-  if (!atuais.length) return textoNovo.length >= 180;
+function blocosAtuais(texto = '') {
+  return String(texto || '').split(/\n\n+/).map(norm).filter(Boolean);
+}
 
-  let sobrepostos = 0;
-  for (const cand of blocos) {
-    if (atuais.some(a => semelhanca(cand, a) >= 0.52 || a.includes(cand) || cand.includes(a))) {
-      sobrepostos++;
+function indiceCorrespondente(alvo, lista = []) {
+  const a = norm(alvo);
+  if (!a) return -1;
+  let melhor = -1;
+  let melhorScore = 0;
+  for (let i = 0; i < lista.length; i++) {
+    const b = norm(lista[i]);
+    const score = a === b ? 1 : (a.includes(b) || b.includes(a) ? 0.95 : semelhanca(a, b));
+    if (score > melhorScore) {
+      melhorScore = score;
+      melhor = i;
     }
   }
+  return melhorScore >= 0.78 ? melhor : -1;
+}
 
-  // Exige evidência de que estamos olhando a mesma matéria. Isso evita trocar
-  // o corpo por cards/recomendações do portal.
-  const mesmaMateria = sobrepostos >= Math.min(2, Math.max(1, atuais.length));
-  if (!mesmaMateria) return false;
+function completarSomenteDepoisDoUltimoParagrafo(atual = '', blocos = []) {
+  const atuais = blocosAtuais(atual);
+  if (!atuais.length || blocos.length < 2) return atual;
 
-  // Aceitamos o corpo oficial mesmo quando ele é um pouco menor, pois o texto
-  // anterior pode conter resumo automático, card ou legenda. Para substituir,
-  // ele precisa ter tamanho jornalístico plausível.
-  return textoNovo.length >= Math.max(220, Math.floor(String(atual || '').length * 0.60));
+  // A correção nunca mais substitui o corpo inteiro. Ela só pode acrescentar
+  // texto que aparece DEPOIS do último parágrafo já extraído, dentro do corpo
+  // principal da matéria. Se não houver correspondência literal forte, não mexe.
+  const ultimo = atuais[atuais.length - 1];
+  const pos = indiceCorrespondente(ultimo, blocos);
+  if (pos < 0 || pos >= blocos.length - 1) return atual;
+
+  const extras = [];
+  for (const cand of blocos.slice(pos + 1)) {
+    const repetido = atuais.some(a =>
+      norm(a) === norm(cand) ||
+      a.includes(cand) || cand.includes(a) ||
+      semelhanca(a, cand) >= 0.78
+    );
+    if (!repetido) extras.push(cand);
+  }
+
+  if (!extras.length) return atual;
+  return [...atuais, ...extras].join('\n\n').trim();
 }
 
 async function recuperarCorpoCompletoG1(materia, base) {
   const h = host(materia?.url);
-  if (h !== 'g1.globo.com' && h !== 'ge.globo.com') return materia;
+  if (h !== 'g1.globo.com') return materia;
 
   try {
     const cfg = base.carregarConfigProxy();
@@ -131,12 +199,9 @@ async function recuperarCorpoCompletoG1(materia, base) {
     const document = new JSDOM(html, { url: materia.url }).window.document;
     const blocos = coletarBlocosG1(document, materia);
 
-    if (corpoG1PareceMelhor(materia.texto, blocos)) {
-      materia.texto = blocos.join('\n\n').trim();
-    }
+    materia.texto = completarSomenteDepoisDoUltimoParagrafo(materia.texto, blocos);
   } catch (_) {
-    // Se a segunda leitura falhar, preserva integralmente o resultado do motor
-    // base em vez de transformar uma falha de rede em falha de extração.
+    // Em qualquer dúvida, preserva o resultado original da camada anterior.
   }
 
   return materia;
@@ -145,7 +210,8 @@ async function recuperarCorpoCompletoG1(materia, base) {
 module.exports = {
   recuperarCorpoCompletoG1,
   coletarBlocosG1,
-  corpoG1PareceMelhor,
+  escolherRaizArtigoG1,
+  completarSomenteDepoisDoUltimoParagrafo,
   ehRuidoG1,
   semelhanca
 };

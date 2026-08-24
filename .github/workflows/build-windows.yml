@@ -34,7 +34,9 @@ jobs:
             "renderer/renderer.js",
             "renderer/styles.css",
             "engine/extrator-materia-v1.25.1.js",
-            "engine/extrator-materia-v1.25.10.js"
+            "engine/extrator-materia-v1.25.10.js",
+            "engine/extrator-materia-v1.25.10-runtime.js",
+            "engine/correcoes-g1-v1.25.10.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -44,8 +46,10 @@ jobs:
           }
           Select-String -Path "renderer/index.html" -Pattern "Extrator de Matérias" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Conexão / Proxy" -SimpleMatch
-          Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10.js" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
           node --check "engine/extrator-materia-v1.25.10.js"
+          node --check "engine/extrator-materia-v1.25.10-runtime.js"
+          node --check "engine/correcoes-g1-v1.25.10.js"
           node --check "main.js"
 
       - name: Gerar EXE Portable de teste
@@ -84,6 +88,7 @@ jobs:
           body: |
             Versão de teste com as primeiras correções do lote de matérias.
             Base V1.25.9 preservada e motor V1.25.1 mantido intacto.
+            Inclui correção específica para recuperar o corpo completo do G1 quando módulos internos do portal interrompem a limpeza antes do fim.
             Arquivo para teste: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
           prerelease: true
           files: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip

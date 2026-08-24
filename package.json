@@ -20,7 +20,7 @@
   },
   "build": {
     "appId": "br.com.extratormaterias.v1259",
-    "productName": "Extrator de Materias V1.25.9",
+    "productName": "Extrator de Materias V1.25.9 CORRIGIDO",
     "asar": true,
     "files": [
       "main.js",
@@ -31,7 +31,7 @@
       "package.json"
     ],
     "win": {
-      "artifactName": "ExtratorNoticiasPortable-V1.25.9.exe",
+      "artifactName": "ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe",
       "target": [
         {
           "target": "portable",
@@ -40,7 +40,7 @@
       ]
     },
     "portable": {
-      "artifactName": "ExtratorNoticiasPortable-V1.25.9.exe"
+      "artifactName": "ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe"
     }
   }
 }

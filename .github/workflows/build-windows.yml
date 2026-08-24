@@ -36,7 +36,8 @@ jobs:
             "engine/extrator-materia-v1.25.1.js",
             "engine/extrator-materia-v1.25.10.js",
             "engine/extrator-materia-v1.25.10-runtime.js",
-            "engine/correcoes-g1-v1.25.10.js"
+            "engine/correcoes-g1-v1.25.10.js",
+            "tests/test-g1-hotfix.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -50,7 +51,11 @@ jobs:
           node --check "engine/extrator-materia-v1.25.10.js"
           node --check "engine/extrator-materia-v1.25.10-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
+          node --check "tests/test-g1-hotfix.js"
           node --check "main.js"
+
+      - name: Teste de regressao do G1
+        run: node tests/test-g1-hotfix.js
 
       - name: Gerar EXE Portable de teste
         run: npm run dist
@@ -88,7 +93,8 @@ jobs:
           body: |
             Versão de teste com as primeiras correções do lote de matérias.
             Base V1.25.9 preservada e motor V1.25.1 mantido intacto.
-            Inclui correção específica para recuperar o corpo completo do G1 quando módulos internos do portal interrompem a limpeza antes do fim.
+            Inclui hotfix do G1: somente texto literal do corpo principal pode ser acrescentado; resumos, cards e recomendações ficam bloqueados.
+            O build executa um teste automático de regressão antes de gerar o EXE.
             Arquivo para teste: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
           prerelease: true
           files: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip

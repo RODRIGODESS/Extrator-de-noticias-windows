@@ -1,0 +1,25 @@
+EXTRATOR DE MATÉRIAS — UBUNTU PORTABLE V1.25.10
+
+COMO USAR
+1. Extraia o ZIP para uma pasta de sua preferência ou para um pendrive.
+2. Mantenha todos os arquivos juntos na mesma pasta.
+3. Dê permissão de execução ao arquivo INICIAR-EXTRATOR-UBUNTU.sh, se necessário.
+4. Execute INICIAR-EXTRATOR-UBUNTU.sh.
+
+Também é possível executar diretamente o arquivo:
+ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage
+
+A aplicação não precisa ser instalada no sistema.
+
+RECURSOS
+- Mesmo layout da versão Windows V1.25.10.
+- Mesmo motor e mesmas correções de extração.
+- Proxy preservado para uso em rede corporativa.
+- Conteúdo editável antes de copiar.
+- Histórico, último TXT e pasta de saída.
+
+ARQUIVOS GERADOS
+A aplicação usa a pasta Downloads/ExtratorMaterias do usuário para os arquivos extraídos.
+
+IMPORTANTE
+Não separe o iniciador do AppImage. Para uso em pendrive, copie a pasta inteira.

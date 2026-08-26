@@ -24,6 +24,14 @@ jobs:
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
 
+      - name: Preparar ícone moderno para Linux
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          test -f assets/extrator-materias-moderno.ico
+          convert assets/extrator-materias-moderno.ico[0] -resize 512x512 assets/extrator-materias-moderno.png
+          test -f assets/extrator-materias-moderno.png
+
       - name: Validar estrutura Ubuntu
         run: |
           test -f main.js
@@ -36,6 +44,7 @@ jobs:
           test -f engine/correcoes-g1-v1.25.10.js
           test -f INICIAR-EXTRATOR-UBUNTU.sh
           test -f LEIA-ME-UBUNTU-PORTABLE.txt
+          test -f assets/extrator-materias-moderno.png
           node --check main.js
           node --check renderer/renderer.js
           node --check engine/extrator-materia-v1.25.10-runtime.js
@@ -76,6 +85,7 @@ jobs:
             Mantém o mesmo layout, funções, motor e correções da versão Windows V1.25.10.
             Proxy preservado e adaptado ao Ubuntu/Linux.
             Conteúdo editável antes de copiar.
+            Ícone moderno aplicado ao AppImage e à janela.
             O ZIP contém o AppImage, o iniciador INICIAR-EXTRATOR-UBUNTU.sh e o guia de uso.
           prerelease: false
           files: release/ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip

@@ -1,9 +1,9 @@
-name: Build Windows Portable V1.25.9 CORRIGIDO
+name: Build Windows Portable V1.25.10 TESTE
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "v1.25.10-correcoes-materias" ]
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar estrutura antiga preservada
+      - name: Confirmar base antiga, motor e novo layout
         shell: powershell
         run: |
           $arquivos = @(
@@ -33,54 +33,73 @@ jobs:
             "renderer/index.html",
             "renderer/renderer.js",
             "renderer/styles.css",
-            "engine/extrator-materia-v1.25.1.js"
+            "engine/extrator-materia-v1.25.1.js",
+            "engine/extrator-materia-v1.25.10.js",
+            "engine/extrator-materia-v1.25.10-runtime.js",
+            "engine/correcoes-g1-v1.25.10.js",
+            "tests/test-g1-hotfix.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
-              Write-Error "Arquivo da estrutura antiga ausente: $a"
+              Write-Error "Arquivo obrigatorio ausente: $a"
               exit 1
             }
           }
           Select-String -Path "renderer/index.html" -Pattern "Extrator de Matérias" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Conexão / Proxy" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Matéria extraída" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Texto da matéria" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Abrir histórico" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Abrir pasta" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
+          node --check "renderer/renderer.js"
+          node --check "engine/extrator-materia-v1.25.10.js"
+          node --check "engine/extrator-materia-v1.25.10-runtime.js"
+          node --check "engine/correcoes-g1-v1.25.10.js"
+          node --check "tests/test-g1-hotfix.js"
+          node --check "main.js"
 
-      - name: Gerar EXE Portable corrigido
+      - name: Teste de regressao do G1
+        run: node tests/test-g1-hotfix.js
+
+      - name: Gerar EXE Portable de teste
         run: npm run dist
 
-      - name: Verificar executavel corrigido
+      - name: Verificar executavel
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe")) {
-            Write-Error "O executavel corrigido nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.10-TESTE.exe")) {
+            Write-Error "O executavel V1.25.10 de teste nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.10-TESTE.exe" | Format-List Name,Length,FullName
 
-      - name: Criar pacote ZIP corrigido
+      - name: Criar pacote ZIP de teste
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe" "package/ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.10-TESTE.exe" "package/ExtratorMateriasPortable-V1.25.10-TESTE.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip" -Force
 
-      - name: Enviar artefato corrigido
+      - name: Enviar artefato V1.25.10 TESTE
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO
-          path: ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE
+          path: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
           if-no-files-found: error
 
-      - name: Publicar Release corrigida
-        if: github.ref == 'refs/heads/main'
+      - name: Publicar pre-release V1.25.10 TESTE
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.9-corrigido
-          name: Extrator de Materias Windows Portable V1.25.9 CORRIGIDO
+          tag_name: v1.25.10-teste
+          target_commitish: v1.25.10-correcoes-materias
+          name: Extrator de Matérias Windows Portable V1.25.10 TESTE
           body: |
-            Build corrigido usando a estrutura antiga Electron/Node.js e preservando o motor V1.25.1.
-            O executavel correto se chama ExtratorMateriasPortable-V1.25.9-CORRIGIDO.exe.
-          files: ExtratorMaterias-Windows-Portable-V1.25.9-CORRIGIDO.zip
-          make_latest: true
+            Versão de teste com correções por fonte e novo layout Windows moderno e acessível.
+            Base V1.25.9 preservada e motor V1.25.1 mantido intacto.
+            Inclui hotfix do G1: somente texto literal do corpo principal pode ser acrescentado; resumos, cards e recomendações ficam bloqueados.
+            O build valida também os arquivos da nova interface antes de gerar o EXE.
+            Arquivo para teste: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
+          prerelease: true
+          files: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip

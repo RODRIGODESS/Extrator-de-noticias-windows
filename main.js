@@ -125,10 +125,11 @@ async function extrairMateriaGUI(opcoes) {
 
 function criarJanelaPrincipal() {
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 820,
-    minWidth: 760,
-    minHeight: 620,
+    width: 1280,
+    height: 860,
+    minWidth: 900,
+    minHeight: 680,
+    backgroundColor: '#08111f',
     autoHideMenuBar: true,
     icon: path.join(__dirname, 'assets', 'extratonoticias.webp'),
     webPreferences: {

@@ -10,4 +10,5 @@
     <color name="stroke">#263A56</color>
     <color name="success">#42D392</color>
     <color name="danger">#FF6B7A</color>
+    <color name="icon_bg">#0A1D3A</color>
 </resources>

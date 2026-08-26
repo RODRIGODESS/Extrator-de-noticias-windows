@@ -31,6 +31,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "assets/extrator-materias-moderno.ico",
       "artifactName": "ExtratorMateriasPortable-V1.25.10-TESTE.exe",
       "target": [
         {

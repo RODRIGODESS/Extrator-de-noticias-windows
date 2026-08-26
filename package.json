@@ -1,13 +1,13 @@
 {
-  "name": "extrator-materias-portable-v12510",
+  "name": "extrator-materias-ubuntu-v12510",
   "version": "1.25.10",
-  "description": "Extrator de Materias Windows Portable V1.25.10 com correcoes por fonte sobre o motor original V1.25.1",
+  "description": "Extrator de Materias Ubuntu Portable V1.25.10 espelhado da versão Windows",
   "main": "main.js",
   "author": "",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win portable --x64"
+    "dist": "electron-builder --linux AppImage --x64"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -19,8 +19,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "br.com.extratormaterias.v12510",
-    "productName": "Extrator de Materias V1.25.10 TESTE",
+    "appId": "br.com.extratormaterias.v12510.ubuntu",
+    "productName": "Extrator de Materias Ubuntu V1.25.10",
     "asar": true,
     "files": [
       "main.js",
@@ -30,18 +30,10 @@
       "renderer/**/*",
       "package.json"
     ],
-    "win": {
-      "icon": "assets/extrator-materias-moderno.ico",
-      "artifactName": "ExtratorMateriasPortable-V1.25.10-TESTE.exe",
-      "target": [
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ]
-    },
-    "portable": {
-      "artifactName": "ExtratorMateriasPortable-V1.25.10-TESTE.exe"
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Utility",
+      "artifactName": "ExtratorMaterias-Ubuntu-Portable-V1.25.10.${ext}"
     }
   }
 }

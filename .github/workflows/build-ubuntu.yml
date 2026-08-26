@@ -1,0 +1,76 @@
+name: Build Ubuntu Portable V1.25.10
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Validar estrutura Ubuntu
+        run: |
+          test -f main.js
+          test -f preload.js
+          test -f renderer/index.html
+          test -f renderer/renderer.js
+          test -f renderer/styles.css
+          test -f engine/extrator-materia-v1.25.1.js
+          test -f engine/extrator-materia-v1.25.10-runtime.js
+          test -f engine/correcoes-g1-v1.25.10.js
+          node --check main.js
+          node --check renderer/renderer.js
+          node --check engine/extrator-materia-v1.25.10-runtime.js
+          node --check engine/correcoes-g1-v1.25.10.js
+
+      - name: Teste de regressão do G1
+        run: node tests/test-g1-hotfix.js
+
+      - name: Gerar AppImage Ubuntu
+        run: npm run dist
+
+      - name: Preparar pacote
+        run: |
+          mkdir -p release/package
+          cp dist/ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage release/package/
+          cp README.md release/package/
+          chmod +x release/package/ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage
+          cd release/package
+          zip -r ../ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip .
+
+      - name: Enviar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExtratorMaterias-Ubuntu-Portable-V1.25.10
+          path: release/ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip
+          if-no-files-found: error
+
+      - name: Publicar direto em Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ubuntu-v1.25.10
+          target_commitish: main
+          name: Extrator de Matérias Ubuntu Portable V1.25.10
+          body: |
+            Versão Ubuntu espelhada da versão Windows V1.25.10.
+            Mesmo layout, mesmas funções, mesmo motor e mesmas correções de extração.
+            Proxy preservado e adaptado ao Ubuntu/Linux.
+            Conteúdo editável antes de copiar.
+          prerelease: false
+          files: release/ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip

@@ -1,9 +1,9 @@
-const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-// V1.25.10 usa uma camada de correções sobre o motor V1.25.1.
-// O arquivo original permanece preservado e pode ser reutilizado sem alterações.
+// Ubuntu espelha a estrutura funcional do Windows V1.25.10.
+// O motor original V1.25.1 permanece preservado e as correções ficam na camada V1.25.10.
 const motor = require('./engine/extrator-materia-v1.25.10-runtime.js');
 
 const PASTA_NOME = 'ExtratorMaterias';
@@ -86,14 +86,12 @@ async function extrairMateriaGUI(opcoes) {
     status(`${conexao.descricao}. Lendo e limpando a matéria com o motor ${motor.VERSAO}...`);
 
     const materia = await motor.extrairMateria(url);
-
     if (!materia || !materia.resultado || !materia.texto) {
       throw new Error('O motor não retornou o corpo completo da matéria.');
     }
 
     status('Matéria extraída. Salvando TXT...');
     const repetida = salvarResultado(materia);
-
     const detalhe = repetida
       ? ' A URL já existia e não foi repetida no histórico.'
       : ' Também foi adicionada ao histórico.';
@@ -138,18 +136,24 @@ function criarJanelaPrincipal() {
       sandbox: true
     }
   });
+
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.executeJavaScript(`
       (() => {
         const resultado = document.getElementById('resultado');
-        if (!resultado) return;
-        resultado.contentEditable = 'true';
-        resultado.spellcheck = true;
-        resultado.setAttribute('role', 'textbox');
-        resultado.setAttribute('aria-multiline', 'true');
-        resultado.setAttribute('aria-label', 'Conteúdo extraído editável. Você pode apagar, corrigir ou acrescentar texto antes de copiar.');
-        resultado.title = 'Clique aqui para editar o conteúdo antes de copiar';
+        if (resultado) {
+          resultado.contentEditable = 'true';
+          resultado.spellcheck = true;
+          resultado.setAttribute('role', 'textbox');
+          resultado.setAttribute('aria-multiline', 'true');
+          resultado.setAttribute('aria-label', 'Conteúdo extraído editável. Você pode apagar, corrigir ou acrescentar texto antes de copiar.');
+          resultado.title = 'Clique aqui para editar o conteúdo antes de copiar';
+        }
+        const eyebrow = document.querySelector('.eyebrow');
+        if (eyebrow) eyebrow.textContent = 'UBUNTU PORTABLE';
+        const footer = document.querySelector('.footer-bar span:first-child');
+        if (footer) footer.innerHTML = '<span class="footer-dot" aria-hidden="true"></span> Interface otimizada para Ubuntu';
       })();
     `).catch(() => {});
   });

@@ -3,42 +3,227 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Extrator de Matérias V1.25.9</title>
+  <meta name="color-scheme" content="dark" />
+  <title>Extrator de Matérias V1.25.10 TESTE</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app">
-    <header class="cabecalho">
-      <div>
-        <h1>Extrator de Matérias</h1>
-        <div id="versao" class="versao">Motor V1.25.1</div>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img">
+            <path d="M6.75 2.75h7.1l3.4 3.4v12.1a3 3 0 0 1-3 3h-7.5a3 3 0 0 1-3-3V5.75a3 3 0 0 1 3-3Z"/>
+            <path d="M13.5 2.9v3.7h3.7M7.4 10h6.8M7.4 13.4h6.8M7.4 16.8h4.2"/>
+            <path class="brand-arrow" d="M17.2 14.8v5.1m0 0-2-2m2 2 2-2"/>
+          </svg>
+        </div>
+        <div>
+          <strong>Extrator</strong>
+          <span>de Matérias</span>
+        </div>
       </div>
-    </header>
 
-    <textarea id="url" rows="3" placeholder="Cole o link da matéria" spellcheck="false"></textarea>
+      <nav class="nav-list" aria-label="Atalhos">
+        <button class="nav-item ativo" type="button" data-scroll="extracaoCard" aria-current="page">
+          <span class="nav-icon" aria-hidden="true">⌂</span>
+          <span>Extrair matéria</span>
+        </button>
+        <button class="nav-item" type="button" data-action="historico">
+          <span class="nav-icon" aria-hidden="true">◷</span>
+          <span>Histórico</span>
+        </button>
+        <button class="nav-item" type="button" data-action="pasta">
+          <span class="nav-icon" aria-hidden="true">▣</span>
+          <span>Pasta de arquivos</span>
+        </button>
+        <button class="nav-item" type="button" data-scroll="proxyCard">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          <span>Conexão / Proxy</span>
+        </button>
+      </nav>
 
-    <details class="rede">
-      <summary>Conexão / Proxy</summary>
-      <label class="check"><input id="usarProxy" type="checkbox" /> Usar proxy corporativo</label>
-      <div id="camposProxy" class="campos-proxy oculto">
-        <input id="usuario" type="text" autocomplete="username" placeholder="Usuário do proxy" />
-        <input id="senha" type="password" autocomplete="current-password" placeholder="Senha do proxy (não será salva)" />
-        <small>Servidor e porta são lidos do config-proxy.json. Usuário e senha ficam somente na memória durante a execução.</small>
-      </div>
-    </details>
+      <div class="sidebar-spacer"></div>
 
-    <button id="extrair" class="principal">Extrair matéria</button>
-    <div id="status" class="status">Pronto para receber um link.</div>
+      <section class="motor-card" aria-label="Estado do motor">
+        <div class="motor-card-top">
+          <span class="shield" aria-hidden="true">◇</span>
+          <span>Motor de Extração</span>
+        </div>
+        <strong id="versaoSidebar">V1.25.10 TESTE</strong>
+        <small>Estrutura antiga preservada</small>
+      </section>
+    </aside>
 
-    <div class="acoes">
-      <button id="ultimo" disabled>Abrir último TXT</button>
-      <button id="historico">Abrir histórico</button>
-      <button id="pasta">Abrir pasta</button>
-    </div>
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">WINDOWS PORTABLE</p>
+          <h1>Extrator de Matérias</h1>
+          <p class="subtitle">Extração organizada, legível e fiel ao conteúdo publicado.</p>
+        </div>
+        <div class="status-pill" id="statusPill" data-state="ready" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="status">Pronto para receber um link.</span>
+        </div>
+      </header>
 
-    <div id="info" class="info"></div>
-    <pre id="resultado" class="resultado"></pre>
-  </main>
+      <section class="card extraction-card" id="extracaoCard" aria-labelledby="extracaoTitulo">
+        <div class="card-heading">
+          <div>
+            <span class="section-kicker">NOVA EXTRAÇÃO</span>
+            <h2 id="extracaoTitulo">Cole o link da matéria</h2>
+          </div>
+          <span class="shortcut" title="Atalho de teclado">Ctrl + Enter</span>
+        </div>
+
+        <div class="url-row">
+          <label class="sr-only" for="url">Link da matéria</label>
+          <div class="url-field">
+            <span class="field-icon" aria-hidden="true">↗</span>
+            <textarea id="url" rows="1" placeholder="https://exemplo.com/noticia/materia-completa" spellcheck="false" aria-describedby="urlAjuda"></textarea>
+          </div>
+          <button id="extrair" class="btn btn-primary" type="button">
+            <span aria-hidden="true">↓</span>
+            <span>Extrair matéria</span>
+          </button>
+        </div>
+        <p id="urlAjuda" class="helper">Cole uma URL completa iniciando com http:// ou https://.</p>
+
+        <div class="secondary-actions">
+          <button id="limpar" class="btn btn-ghost" type="button">
+            <span aria-hidden="true">×</span>
+            Limpar
+          </button>
+          <button class="btn btn-ghost" type="button" data-action="pasta">
+            <span aria-hidden="true">▣</span>
+            Abrir pasta
+          </button>
+        </div>
+      </section>
+
+      <details class="card proxy-card" id="proxyCard">
+        <summary>
+          <span class="summary-main">
+            <span class="summary-icon" aria-hidden="true">⚙</span>
+            <span>
+              <strong>Conexão / Proxy</strong>
+              <small>Configuração opcional para rede corporativa</small>
+            </span>
+          </span>
+          <span class="chevron" aria-hidden="true">⌄</span>
+        </summary>
+
+        <div class="proxy-content">
+          <label class="switch-row" for="usarProxy">
+            <span>
+              <strong>Usar proxy corporativo</strong>
+              <small>Usuário e senha permanecem somente na memória durante a execução.</small>
+            </span>
+            <span class="switch">
+              <input id="usarProxy" type="checkbox" />
+              <span class="switch-ui" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <div id="camposProxy" class="proxy-fields oculto">
+            <label>
+              <span>Usuário</span>
+              <input id="usuario" type="text" autocomplete="username" placeholder="Usuário do proxy" />
+            </label>
+            <label>
+              <span>Senha</span>
+              <input id="senha" type="password" autocomplete="current-password" placeholder="Senha do proxy" />
+            </label>
+            <p>Servidor e porta são lidos do arquivo <code>config-proxy.json</code>.</p>
+          </div>
+        </div>
+      </details>
+
+      <section class="results-grid" aria-label="Resultado da extração">
+        <article class="card metadata-card">
+          <div class="card-heading compact">
+            <div>
+              <span class="section-kicker">DADOS IDENTIFICADOS</span>
+              <h2>Matéria extraída</h2>
+            </div>
+            <span class="success-mark" id="successMark" aria-hidden="true">✓</span>
+          </div>
+
+          <div class="metadata-list">
+            <div class="meta-item">
+              <span class="meta-icon" aria-hidden="true">T</span>
+              <div><small>Título</small><strong id="metaTitulo">Aguardando extração</strong></div>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon" aria-hidden="true">▤</span>
+              <div><small>Veículo</small><strong id="metaVeiculo">—</strong></div>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon" aria-hidden="true">◫</span>
+              <div><small>Data</small><strong id="metaData">—</strong></div>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon" aria-hidden="true">●</span>
+              <div><small>Autor</small><strong id="metaAutor">—</strong></div>
+            </div>
+            <div class="meta-item subtitulo-item">
+              <span class="meta-icon" aria-hidden="true">≡</span>
+              <div><small>Subtítulo</small><strong id="metaSubtitulo">—</strong></div>
+            </div>
+            <div class="meta-item link-item">
+              <span class="meta-icon" aria-hidden="true">↗</span>
+              <div><small>Link</small><strong id="metaLink">—</strong></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card content-card">
+          <div class="card-heading compact">
+            <div>
+              <span class="section-kicker">CONTEÚDO</span>
+              <h2>Texto da matéria</h2>
+            </div>
+            <span id="info" class="content-info">Nenhuma matéria extraída</span>
+          </div>
+
+          <div class="result-wrap">
+            <div id="resultadoVazio" class="empty-state">
+              <div class="empty-icon" aria-hidden="true">▧</div>
+              <strong>O conteúdo aparecerá aqui</strong>
+              <span>Informe um link acima e clique em “Extrair matéria”.</span>
+            </div>
+            <pre id="resultado" class="resultado" tabindex="0" aria-label="Conteúdo extraído da matéria"></pre>
+          </div>
+        </article>
+      </section>
+
+      <section class="quick-actions" aria-label="Ações rápidas">
+        <button id="copiar" class="quick-btn" type="button" disabled>
+          <span class="quick-icon" aria-hidden="true">▱</span>
+          <span><strong>Copiar texto</strong><small>Copia a extração completa</small></span>
+        </button>
+        <button id="ultimo" class="quick-btn" type="button" disabled>
+          <span class="quick-icon" aria-hidden="true">↓</span>
+          <span><strong>Abrir último TXT</strong><small>Abre o arquivo mais recente</small></span>
+        </button>
+        <button id="historico" class="quick-btn" type="button">
+          <span class="quick-icon" aria-hidden="true">◷</span>
+          <span><strong>Abrir histórico</strong><small>Consulta matérias anteriores</small></span>
+        </button>
+        <button id="pasta" class="quick-btn" type="button">
+          <span class="quick-icon" aria-hidden="true">▣</span>
+          <span><strong>Abrir pasta</strong><small>Downloads / ExtratorMaterias</small></span>
+        </button>
+      </section>
+
+      <footer class="footer-bar">
+        <span><span class="footer-dot" aria-hidden="true"></span> Interface otimizada para Windows</span>
+        <span id="versao">Motor V1.25.10 TESTE</span>
+      </footer>
+    </main>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>

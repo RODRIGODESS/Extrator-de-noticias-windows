@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar base antiga e camada V1.25.10
+      - name: Confirmar base antiga, motor e novo layout
         shell: powershell
         run: |
           $arquivos = @(
@@ -47,7 +47,12 @@ jobs:
           }
           Select-String -Path "renderer/index.html" -Pattern "Extrator de Matérias" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Conexão / Proxy" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Matéria extraída" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Texto da matéria" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Abrir histórico" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern "Abrir pasta" -SimpleMatch
           Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
+          node --check "renderer/renderer.js"
           node --check "engine/extrator-materia-v1.25.10.js"
           node --check "engine/extrator-materia-v1.25.10-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
@@ -91,10 +96,10 @@ jobs:
           target_commitish: v1.25.10-correcoes-materias
           name: Extrator de Matérias Windows Portable V1.25.10 TESTE
           body: |
-            Versão de teste com as primeiras correções do lote de matérias.
+            Versão de teste com correções por fonte e novo layout Windows moderno e acessível.
             Base V1.25.9 preservada e motor V1.25.1 mantido intacto.
             Inclui hotfix do G1: somente texto literal do corpo principal pode ser acrescentado; resumos, cards e recomendações ficam bloqueados.
-            O build executa um teste automático de regressão antes de gerar o EXE.
+            O build valida também os arquivos da nova interface antes de gerar o EXE.
             Arquivo para teste: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
           prerelease: true
           files: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip

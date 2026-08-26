@@ -40,21 +40,22 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String VERSAO = "1.25.1-ANDROID-WEBVIEW-LAYOUT-MODERNO";
+    private static final String VERSAO = "1.25.1-ANDROID-WEBVIEW-LAYOUT-MODERNO-EDITAVEL";
     private static final String RELATIVE_PATH = "Download/ExtratorMaterias/";
     private static final String LAST_FILE = "materia-extraida.txt";
     private static final String HISTORY_FILE = "materias-extraidas.txt";
     private static final String SEPARATOR = "\n######################################################################\n\n";
 
-    private EditText urlInput;
-    private Button extractButton, copyButton, historyButton, folderButton;
-    private TextView statusText, versionText, metaTitle, metaSubtitle, metaVehicle, metaAuthor, metaDate, metaUrl, bodyText;
+    private EditText urlInput, bodyText;
+    private Button extractButton, copyButton, historyButton, folderButton, clearTextButton;
+    private TextView statusText, versionText, metaTitle, metaSubtitle, metaVehicle, metaAuthor, metaDate, metaUrl;
     private LinearLayout metaCard, contentCard;
     private WebView webView;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final List<ArticleData> snapshots = new ArrayList<>();
     private String formattedResult = "";
     private String currentUrl = "";
+    private ArticleData currentArticle = null;
     private int pendingReads = 0;
 
     @Override
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         copyButton = findViewById(R.id.copyButton);
         historyButton = findViewById(R.id.historyButton);
         folderButton = findViewById(R.id.folderButton);
+        clearTextButton = findViewById(R.id.clearTextButton);
         statusText = findViewById(R.id.statusText);
         versionText = findViewById(R.id.versionText);
         metaCard = findViewById(R.id.metaCard);
@@ -123,6 +125,11 @@ public class MainActivity extends AppCompatActivity {
     private void configureActions() {
         extractButton.setOnClickListener(v -> startExtraction());
         copyButton.setOnClickListener(v -> copyResult());
+        clearTextButton.setOnClickListener(v -> {
+            bodyText.setText("");
+            bodyText.requestFocus();
+            statusText.setText("Texto limpo. Você pode digitar ou colar um novo conteúdo antes de copiar.");
+        });
         historyButton.setOnClickListener(v -> openTextFile(HISTORY_FILE));
         folderButton.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -140,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
         }
         currentUrl = url;
         formattedResult = "";
+        currentArticle = null;
         metaCard.setVisibility(View.GONE);
         contentCard.setVisibility(View.GONE);
         extractButton.setEnabled(false);
@@ -181,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (best.vehicle.isEmpty()) best.vehicle = vehicleFromUrl(best.url);
         if (best.author.isEmpty()) best.author = "não informado";
+        currentArticle = best;
         formattedResult = formatResult(best);
         showResult(best);
         saveResult(best, formattedResult);
@@ -210,6 +219,20 @@ public class MainActivity extends AppCompatActivity {
         if (!d.date.isEmpty()) b.append(d.date).append("\n\n");
         b.append(d.body.trim());
         return b.toString().trim();
+    }
+
+    private String buildEditedResult() {
+        if (currentArticle == null) return "";
+        String editedBody = bodyText.getText().toString().trim();
+        ArticleData edited = new ArticleData();
+        edited.url = currentArticle.url;
+        edited.vehicle = currentArticle.vehicle;
+        edited.title = currentArticle.title;
+        edited.subtitle = currentArticle.subtitle;
+        edited.author = currentArticle.author;
+        edited.date = currentArticle.date;
+        edited.body = editedBody;
+        return formatResult(edited);
     }
 
     private String clean(String s) {
@@ -252,12 +275,9 @@ public class MainActivity extends AppCompatActivity {
                 String old = readDownloadFile(HISTORY_FILE);
                 boolean duplicate = old.contains(data.url);
                 if (!duplicate) writeDownloadFile(HISTORY_FILE, old.isEmpty() ? text : old + SEPARATOR + text);
-                runOnUiThread(() -> {
-                    copyResult();
-                    statusText.setText(duplicate
-                            ? "✓ Matéria salva. URL já existia no histórico. Texto copiado."
-                            : "✓ Matéria salva em Downloads/ExtratorMaterias. Texto copiado.");
-                });
+                runOnUiThread(() -> statusText.setText(duplicate
+                        ? "✓ Matéria salva. URL já existia no histórico. Edite o texto e toque em Copiar editado."
+                        : "✓ Matéria salva em Downloads/ExtratorMaterias. Edite o texto e toque em Copiar editado."));
             } catch (Exception e) {
                 runOnUiThread(() -> setError("Extração concluída, mas não foi possível salvar o TXT: " + e.getMessage()));
             }
@@ -316,9 +336,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void copyResult() {
-        if (formattedResult.isEmpty()) return;
+        if (currentArticle == null) {
+            setError("Extraia uma matéria antes de copiar.");
+            return;
+        }
+        String edited = buildEditedResult();
+        if (bodyText.getText().toString().trim().isEmpty()) {
+            setError("O texto da matéria está vazio. Edite ou cole um conteúdo antes de copiar.");
+            return;
+        }
+        formattedResult = edited;
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(ClipData.newPlainText("Matéria extraída", formattedResult));
+        cm.setPrimaryClip(ClipData.newPlainText("Matéria extraída", edited));
+        statusText.setText("✓ Conteúdo editado copiado para a área de transferência.");
+
+        new Thread(() -> {
+            try { writeDownloadFile(LAST_FILE, edited); }
+            catch (Exception ignored) {}
+        }).start();
     }
 
     private void setError(String message) {

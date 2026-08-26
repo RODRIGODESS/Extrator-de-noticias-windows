@@ -20,6 +20,12 @@ function pastaDownload() {
 function caminhoUltimo() { return path.join(pastaDownload(), ARQUIVO_ULTIMO); }
 function caminhoHistorico() { return path.join(pastaDownload(), ARQUIVO_HISTORICO); }
 
+function caminhoIcone() {
+  const png = path.join(__dirname, 'assets', 'extrator-materias-moderno.png');
+  const ico = path.join(__dirname, 'assets', 'extrator-materias-moderno.ico');
+  return fs.existsSync(png) ? png : ico;
+}
+
 function status(mensagem) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('extracao-status', mensagem);
@@ -128,7 +134,7 @@ function criarJanelaPrincipal() {
     minHeight: 680,
     backgroundColor: '#08111f',
     autoHideMenuBar: true,
-    icon: path.join(__dirname, 'assets', 'extrator-materias-moderno.ico'),
+    icon: caminhoIcone(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

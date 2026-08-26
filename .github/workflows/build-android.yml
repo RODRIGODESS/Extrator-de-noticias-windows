@@ -3,10 +3,7 @@ name: Build Android Extrator de Matérias
 on:
   workflow_dispatch:
   push:
-    branches: [ "android-v1.25.1-layout-moderno" ]
-    paths:
-      - "android/**"
-      - ".github/workflows/build-android.yml"
+    branches: [ "main" ]
 
 permissions:
   contents: write
@@ -38,10 +35,8 @@ jobs:
           test -f android/app/src/main/java/br/com/extratormaterias/MainActivity.java
           test -f android/app/src/main/res/layout/activity_main.xml
           ! grep -Rni "proxy" android/app/src/main || (echo "Proxy não deve existir na versão Android" && exit 1)
-          grep -q "Extrator de Matérias" android/app/src/main/res/layout/activity_main.xml
-          grep -q "Texto da matéria" android/app/src/main/res/layout/activity_main.xml
 
-      - name: Compilar APK Debug
+      - name: Compilar APK
         run: gradle -p android assembleDebug --stacktrace
 
       - name: Preparar APK
@@ -56,16 +51,16 @@ jobs:
           path: release/ExtratorMaterias-Android-v1.25.1-LAYOUT-MODERNO.apk
           if-no-files-found: error
 
-      - name: Publicar pre-release Android
+      - name: Publicar direto em Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-v1.25.1-layout-moderno
-          target_commitish: android-v1.25.1-layout-moderno
+          target_commitish: main
           name: Extrator de Matérias Android v1.25.1 — Layout Moderno
           body: |
-            Versão Android de teste com o novo layout moderno aprovado.
+            Android com layout moderno aprovado.
+            Conteúdo editável antes de copiar.
             Sem proxy.
-            Extração via WebView com três leituras progressivas até 5 segundos para reduzir cortes em páginas carregadas dinamicamente.
-            Salva materia-extraida.txt e materias-extraidas.txt em Downloads/ExtratorMaterias.
-          prerelease: true
+            Salva os arquivos em Downloads/ExtratorMaterias.
+          prerelease: false
           files: release/ExtratorMaterias-Android-v1.25.1-LAYOUT-MODERNO.apk

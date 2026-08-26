@@ -1,7 +1,0 @@
-{
-  "ATIVADO": false,
-  "SERVIDOR": "",
-  "PORTA": "",
-  "TIMEOUT_MS": 45000,
-  "CERTIFICADO_CA": ""
-}

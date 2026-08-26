@@ -2,7 +2,9 @@ const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-const motor = require('./engine/extrator-materia-v1.25.1.js');
+// V1.25.10 usa uma camada de correções sobre o motor V1.25.1.
+// O arquivo original permanece preservado e pode ser reutilizado sem alterações.
+const motor = require('./engine/extrator-materia-v1.25.10-runtime.js');
 
 const PASTA_NOME = 'ExtratorMaterias';
 const ARQUIVO_ULTIMO = 'materia-extraida.txt';
@@ -68,7 +70,6 @@ function salvarResultado(materia) {
     fs.appendFileSync(caminhoHistorico(), materia.resultado + SEPARADOR, 'utf8');
   }
 
-  try { clipboard.writeText(materia.resultado); } catch (_) {}
   return repetida;
 }
 
@@ -82,7 +83,7 @@ async function extrairMateriaGUI(opcoes) {
   extractionBusy = true;
   try {
     const conexao = configurarConexao(opcoes || {});
-    status(`${conexao.descricao}. Lendo e limpando a matéria com o motor V1.25.1...`);
+    status(`${conexao.descricao}. Lendo e limpando a matéria com o motor ${motor.VERSAO}...`);
 
     const materia = await motor.extrairMateria(url);
 
@@ -90,14 +91,14 @@ async function extrairMateriaGUI(opcoes) {
       throw new Error('O motor não retornou o corpo completo da matéria.');
     }
 
-    status('Matéria extraída. Salvando TXT e copiando para a área de transferência...');
+    status('Matéria extraída. Salvando TXT...');
     const repetida = salvarResultado(materia);
 
     const detalhe = repetida
       ? ' A URL já existia e não foi repetida no histórico.'
       : ' Também foi adicionada ao histórico.';
 
-    status('✓ Matéria salva em Downloads/ExtratorMaterias.' + detalhe + ' Texto copiado.');
+    status('✓ Matéria salva em Downloads/ExtratorMaterias.' + detalhe + ' Você pode editar o conteúdo antes de copiar.');
     return {
       ok: true,
       formatado: materia.resultado,
@@ -123,12 +124,13 @@ async function extrairMateriaGUI(opcoes) {
 
 function criarJanelaPrincipal() {
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 820,
-    minWidth: 760,
-    minHeight: 620,
+    width: 1280,
+    height: 860,
+    minWidth: 900,
+    minHeight: 680,
+    backgroundColor: '#08111f',
     autoHideMenuBar: true,
-    icon: path.join(__dirname, 'assets', 'extratonoticias.webp'),
+    icon: path.join(__dirname, 'assets', 'extrator-materias-moderno.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -137,6 +139,20 @@ function criarJanelaPrincipal() {
     }
   });
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.executeJavaScript(`
+      (() => {
+        const resultado = document.getElementById('resultado');
+        if (!resultado) return;
+        resultado.contentEditable = 'true';
+        resultado.spellcheck = true;
+        resultado.setAttribute('role', 'textbox');
+        resultado.setAttribute('aria-multiline', 'true');
+        resultado.setAttribute('aria-label', 'Conteúdo extraído editável. Você pode apagar, corrigir ou acrescentar texto antes de copiar.');
+        resultado.title = 'Clique aqui para editar o conteúdo antes de copiar';
+      })();
+    `).catch(() => {});
+  });
 }
 
 app.whenReady().then(() => {

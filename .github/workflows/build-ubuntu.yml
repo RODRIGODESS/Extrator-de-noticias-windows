@@ -34,6 +34,8 @@ jobs:
           test -f engine/extrator-materia-v1.25.1.js
           test -f engine/extrator-materia-v1.25.10-runtime.js
           test -f engine/correcoes-g1-v1.25.10.js
+          test -f INICIAR-EXTRATOR-UBUNTU.sh
+          test -f LEIA-ME-UBUNTU-PORTABLE.txt
           node --check main.js
           node --check renderer/renderer.js
           node --check engine/extrator-materia-v1.25.10-runtime.js
@@ -45,14 +47,16 @@ jobs:
       - name: Gerar AppImage Ubuntu
         run: npm run dist
 
-      - name: Preparar pacote
+      - name: Preparar pacote portátil em pasta
         run: |
-          mkdir -p release/package
-          cp dist/ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage release/package/
-          cp README.md release/package/
-          chmod +x release/package/ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage
-          cd release/package
-          zip -r ../ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip .
+          mkdir -p release/ExtratorMaterias-Ubuntu-Portable-V1.25.10
+          cp dist/ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage release/ExtratorMaterias-Ubuntu-Portable-V1.25.10/
+          cp INICIAR-EXTRATOR-UBUNTU.sh release/ExtratorMaterias-Ubuntu-Portable-V1.25.10/
+          cp LEIA-ME-UBUNTU-PORTABLE.txt release/ExtratorMaterias-Ubuntu-Portable-V1.25.10/
+          chmod +x release/ExtratorMaterias-Ubuntu-Portable-V1.25.10/ExtratorMaterias-Ubuntu-Portable-V1.25.10.AppImage
+          chmod +x release/ExtratorMaterias-Ubuntu-Portable-V1.25.10/INICIAR-EXTRATOR-UBUNTU.sh
+          cd release
+          zip -r ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip ExtratorMaterias-Ubuntu-Portable-V1.25.10
 
       - name: Enviar artefato
         uses: actions/upload-artifact@v4
@@ -68,9 +72,10 @@ jobs:
           target_commitish: main
           name: Extrator de Matérias Ubuntu Portable V1.25.10
           body: |
-            Versão Ubuntu espelhada da versão Windows V1.25.10.
-            Mesmo layout, mesmas funções, mesmo motor e mesmas correções de extração.
+            Versão Ubuntu Portable em pasta, sem instalação.
+            Mantém o mesmo layout, funções, motor e correções da versão Windows V1.25.10.
             Proxy preservado e adaptado ao Ubuntu/Linux.
             Conteúdo editável antes de copiar.
+            O ZIP contém o AppImage, o iniciador INICIAR-EXTRATOR-UBUNTU.sh e o guia de uso.
           prerelease: false
           files: release/ExtratorMaterias-Ubuntu-Portable-V1.25.10.zip

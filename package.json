@@ -33,6 +33,7 @@
     "linux": {
       "target": ["AppImage"],
       "category": "Utility",
+      "icon": "assets/extrator-materias-moderno.png",
       "artifactName": "ExtratorMaterias-Ubuntu-Portable-V1.25.10.${ext}"
     }
   }

@@ -1,7 +1,8 @@
 const camada = require('./extrator-materia-v1.25.10.js');
 const { recuperarCorpoCompletoG1 } = require('./correcoes-g1-v1.25.10.js');
+const { ehEstadao, recuperarEstadao } = require('./correcoes-estadao-v1.25.12.js');
 
-const VERSAO = '1.25.10-CORRECOES-FONTES-G1-CORPO-LITERAL-HOTFIX';
+const VERSAO = '1.25.12-CORRECOES-FONTES-G1-ESTADAO-PROXY';
 
 function formatar(m) {
   const p = [m.url, '', m.veiculo, '', `*${m.titulo || 'Título não identificado'}*`];
@@ -14,14 +15,27 @@ function formatar(m) {
 }
 
 async function extrairMateria(url) {
-  const materia = await camada.extrairMateria(url);
+  let materia = null;
+  let erroBase = null;
 
-  // G1: a recuperação complementar é conservadora. Ela nunca substitui o
-  // corpo por resumo/card; apenas acrescenta parágrafos literais que estejam
-  // depois do último parágrafo já extraído no corpo principal da notícia.
-  await recuperarCorpoCompletoG1(materia, camada);
+  try {
+    materia = await camada.extrairMateria(url);
+  } catch (e) {
+    erroBase = e;
+    if (!ehEstadao(url)) throw e;
+  }
 
-  if (!materia.texto) throw new Error('O corpo da matéria ficou vazio após as correções.');
+  if (ehEstadao(url)) {
+    try {
+      materia = await recuperarEstadao(materia, url, camada);
+    } catch (e) {
+      if (!materia || !materia.texto) throw (erroBase || e);
+    }
+  }
+
+  if (materia) await recuperarCorpoCompletoG1(materia, camada);
+
+  if (!materia || !materia.texto) throw new Error('O corpo da matéria ficou vazio após as correções.');
   return formatar(materia);
 }
 

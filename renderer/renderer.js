@@ -29,7 +29,7 @@ function classificarStatus(mensagem = '') {
   const t = String(mensagem).toLowerCase();
   if (/erro|não foi|nao foi|precisa|informe|cole o link|já existe|ja existe/.test(t)) return 'error';
   if (/^✓|salva|concluída|concluida|extraída|extraida/.test(t)) return 'success';
-  if (/lendo|limpando|process|salvando|conexão|conexao/.test(t)) return 'busy';
+  if (/lendo|limpando|process|salvando|conexão|conexao|proxy/.test(t)) return 'busy';
   return 'ready';
 }
 
@@ -83,6 +83,13 @@ async function atualizarEstado() {
     versao.textContent = texto;
     versaoSidebar.textContent = estado.versaoMotor;
   }
+
+  if (estado.proxyConfigurado) {
+    usarProxy.checked = true;
+    camposProxy.classList.remove('oculto');
+    usarProxy.title = `Proxy embutido: ${estado.proxyServidor || 'proxy-7dn.mb'}:${estado.proxyPorta || '6060'}`;
+    definirStatus(`Proxy configurado no aplicativo: ${estado.proxyServidor || 'proxy-7dn.mb'}:${estado.proxyPorta || '6060'}. Informe usuário e senha para extrair.`, 'ready');
+  }
 }
 
 async function extrair() {
@@ -113,7 +120,7 @@ async function extrair() {
   exibirResultado('');
   limparMetadados();
   info.textContent = 'Processando…';
-  definirStatus('Preparando a extração…', 'busy');
+  definirStatus(usarProxy.checked ? 'Conectando ao proxy e extraindo matéria…' : 'Preparando a extração…', 'busy');
 
   try {
     const retorno = await window.extratorAPI.extrair({

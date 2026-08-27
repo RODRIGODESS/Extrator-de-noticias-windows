@@ -1,9 +1,9 @@
-name: Build Windows Portable V1.25.10 TESTE
+name: Build Windows Portable V1.25.11
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "v1.25.10-correcoes-materias" ]
+    branches: [ "main" ]
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar base antiga, motor e novo layout
+      - name: Confirmar base aprovada e camada V1.25.11
         shell: powershell
         run: |
           $arquivos = @(
@@ -35,9 +35,12 @@ jobs:
             "renderer/styles.css",
             "engine/extrator-materia-v1.25.1.js",
             "engine/extrator-materia-v1.25.10.js",
+            "engine/extrator-materia-v1.25.10-runtime-base.js",
             "engine/extrator-materia-v1.25.10-runtime.js",
+            "engine/extrator-materia-v1.25.11-runtime.js",
             "engine/correcoes-g1-v1.25.10.js",
-            "tests/test-g1-hotfix.js"
+            "tests/test-g1-hotfix.js",
+            "tests/test-v1.25.11.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -54,52 +57,60 @@ jobs:
           Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
           node --check "renderer/renderer.js"
           node --check "engine/extrator-materia-v1.25.10.js"
+          node --check "engine/extrator-materia-v1.25.10-runtime-base.js"
           node --check "engine/extrator-materia-v1.25.10-runtime.js"
+          node --check "engine/extrator-materia-v1.25.11-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
           node --check "tests/test-g1-hotfix.js"
+          node --check "tests/test-v1.25.11.js"
           node --check "main.js"
 
-      - name: Teste de regressao do G1
-        run: node tests/test-g1-hotfix.js
+      - name: Testes de regressao
+        run: |
+          node tests/test-g1-hotfix.js
+          node tests/test-v1.25.11.js
 
-      - name: Gerar EXE Portable de teste
+      - name: Gerar EXE Portable
         run: npm run dist
 
       - name: Verificar executavel
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.10-TESTE.exe")) {
-            Write-Error "O executavel V1.25.10 de teste nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.11.exe")) {
+            Write-Error "O executavel V1.25.11 nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorMateriasPortable-V1.25.10-TESTE.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.11.exe" | Format-List Name,Length,FullName
 
-      - name: Criar pacote ZIP de teste
+      - name: Criar pacote ZIP
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorMateriasPortable-V1.25.10-TESTE.exe" "package/ExtratorMateriasPortable-V1.25.10-TESTE.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.11.exe" "package/ExtratorMateriasPortable-V1.25.11.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.11.zip" -Force
 
-      - name: Enviar artefato V1.25.10 TESTE
+      - name: Enviar artefato V1.25.11
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE
-          path: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.11
+          path: ExtratorMaterias-Windows-Portable-V1.25.11.zip
           if-no-files-found: error
 
-      - name: Publicar pre-release V1.25.10 TESTE
+      - name: Publicar Release V1.25.11
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.10-teste
-          target_commitish: v1.25.10-correcoes-materias
-          name: Extrator de Matérias Windows Portable V1.25.10 TESTE
+          tag_name: v1.25.11
+          target_commitish: main
+          name: Extrator de Matérias Windows Portable V1.25.11
           body: |
-            Versão de teste com correções por fonte e novo layout Windows moderno e acessível.
-            Base V1.25.9 preservada e motor V1.25.1 mantido intacto.
-            Inclui hotfix do G1: somente texto literal do corpo principal pode ser acrescentado; resumos, cards e recomendações ficam bloqueados.
-            O build valida também os arquivos da nova interface antes de gerar o EXE.
-            Arquivo para teste: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
-          prerelease: true
-          files: ExtratorMaterias-Windows-Portable-V1.25.10-TESTE.zip
+            Versão Windows V1.25.11 com correções pontuais de extração, preservando layout, proxy, histórico, edição e a base V1.25.10.
+            - fallback HTML conservador para páginas em que o Readability não identifica o corpo;
+            - tentativa alternativa para URLs G1 pela rota AMP quando a página normal falhar;
+            - tentativa canônica/AMP para BNews;
+            - correção de falso subtítulo no Defesa Aérea & Naval, devolvendo o parágrafo ao corpo da matéria;
+            - hotfix conservador do G1 V1.25.10 preservado e coberto por teste de regressão.
+            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.11.zip
+          prerelease: false
+          make_latest: true
+          files: ExtratorMaterias-Windows-Portable-V1.25.11.zip

@@ -99,7 +99,7 @@ function dataDocumento(doc, ld, url) {
     ...[...doc.querySelectorAll('time, [class*="date" i], [class*="publish" i]')].slice(0, 12).map(el => norm(el.getAttribute('datetime') || el.textContent))
   ].filter(Boolean);
   for (const c of candidatos) {
-    const f = base.formatarData(c) || dataPt(c);
+    const f = dataPt(c) || base.formatarData(c);
     if (f) return f;
   }
   return dataDaUrl(url) || 'Data não identificada';

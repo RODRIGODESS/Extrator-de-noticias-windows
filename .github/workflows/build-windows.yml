@@ -1,4 +1,4 @@
-name: Build Windows Portable V1.25.11
+name: Build Windows Portable V1.25.12
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar base aprovada e camada V1.25.11
+      - name: Confirmar base aprovada e camada V1.25.12
         shell: powershell
         run: |
           $arquivos = @(
@@ -38,9 +38,11 @@ jobs:
             "engine/extrator-materia-v1.25.10-runtime-base.js",
             "engine/extrator-materia-v1.25.10-runtime.js",
             "engine/extrator-materia-v1.25.11-runtime.js",
+            "engine/extrator-materia-v1.25.12-runtime.js",
             "engine/correcoes-g1-v1.25.10.js",
             "tests/test-g1-hotfix.js",
-            "tests/test-v1.25.11.js"
+            "tests/test-v1.25.11.js",
+            "tests/test-v1.25.12.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -60,15 +62,18 @@ jobs:
           node --check "engine/extrator-materia-v1.25.10-runtime-base.js"
           node --check "engine/extrator-materia-v1.25.10-runtime.js"
           node --check "engine/extrator-materia-v1.25.11-runtime.js"
+          node --check "engine/extrator-materia-v1.25.12-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
           node --check "tests/test-g1-hotfix.js"
           node --check "tests/test-v1.25.11.js"
+          node --check "tests/test-v1.25.12.js"
           node --check "main.js"
 
       - name: Testes de regressao
         run: |
           node tests/test-g1-hotfix.js
           node tests/test-v1.25.11.js
+          node tests/test-v1.25.12.js
 
       - name: Gerar EXE Portable
         run: npm run dist
@@ -76,41 +81,41 @@ jobs:
       - name: Verificar executavel
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.11.exe")) {
-            Write-Error "O executavel V1.25.11 nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.12.exe")) {
+            Write-Error "O executavel V1.25.12 nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorMateriasPortable-V1.25.11.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.12.exe" | Format-List Name,Length,FullName
 
       - name: Criar pacote ZIP
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorMateriasPortable-V1.25.11.exe" "package/ExtratorMateriasPortable-V1.25.11.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.12.exe" "package/ExtratorMateriasPortable-V1.25.12.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.11.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.12.zip" -Force
 
-      - name: Enviar artefato V1.25.11
+      - name: Enviar artefato V1.25.12
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorMaterias-Windows-Portable-V1.25.11
-          path: ExtratorMaterias-Windows-Portable-V1.25.11.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.12
+          path: ExtratorMaterias-Windows-Portable-V1.25.12.zip
           if-no-files-found: error
 
-      - name: Publicar Release V1.25.11
+      - name: Publicar Release V1.25.12
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.11
+          tag_name: v1.25.12
           target_commitish: main
-          name: Extrator de Matérias Windows Portable V1.25.11
+          name: Extrator de Matérias Windows Portable V1.25.12
           body: |
-            Versão Windows V1.25.11 com correções pontuais de extração, preservando layout, proxy, histórico, edição e a base V1.25.10.
-            - fallback HTML conservador para páginas em que o Readability não identifica o corpo;
-            - tentativa alternativa para URLs G1 pela rota AMP quando a página normal falhar;
-            - tentativa canônica/AMP para BNews;
-            - correção de falso subtítulo no Defesa Aérea & Naval, devolvendo o parágrafo ao corpo da matéria;
-            - hotfix conservador do G1 V1.25.10 preservado e coberto por teste de regressão.
-            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.11.zip
+            Versão Windows V1.25.12 com correção pontual para o Valor Econômico, preservando layout, proxy, histórico, edição e todas as correções da V1.25.11.
+            - mantém primeiro a extração normal já aprovada;
+            - se uma URL do Valor falhar, tenta a rota oficial google/amp da mesma matéria;
+            - não altera as regras existentes de limpeza do Valor;
+            - não tenta contornar conteúdo que exija assinatura/autenticação;
+            - testes anteriores do G1 e da V1.25.11 continuam obrigatórios no build.
+            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.12.zip
           prerelease: false
           make_latest: true
-          files: ExtratorMaterias-Windows-Portable-V1.25.11.zip
+          files: ExtratorMaterias-Windows-Portable-V1.25.12.zip

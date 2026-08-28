@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, clipboard, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
@@ -9,6 +9,8 @@ const motor = require('./engine/extrator-materia-v1.25.10-runtime.js');
 const PASTA_NOME = 'ExtratorMaterias';
 const ARQUIVO_ULTIMO = 'materia-extraida.txt';
 const ARQUIVO_HISTORICO = 'materias-extraidas.txt';
+const ARQUIVO_CREDENCIAIS_ASSINANTE = 'credenciais-assinante.json';
+const PROVEDOR_VALOR_GLOBO = 'valorGlobo';
 const SEPARADOR = '\n' + '#'.repeat(70) + '\n\n';
 
 let mainWindow = null;
@@ -19,11 +21,114 @@ function pastaDownload() {
 }
 function caminhoUltimo() { return path.join(pastaDownload(), ARQUIVO_ULTIMO); }
 function caminhoHistorico() { return path.join(pastaDownload(), ARQUIVO_HISTORICO); }
+function caminhoCredenciaisAssinante() {
+  return path.join(app.getPath('userData'), ARQUIVO_CREDENCIAIS_ASSINANTE);
+}
 
 function status(mensagem) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('extracao-status', mensagem);
   }
+}
+
+function normalizarProvedor(provedor) {
+  const p = String(provedor || '').trim();
+  if (!p || p === PROVEDOR_VALOR_GLOBO) return PROVEDOR_VALOR_GLOBO;
+  throw new Error('Provedor de assinante não suportado nesta versão.');
+}
+
+function lerCofreCredenciais() {
+  const arquivo = caminhoCredenciaisAssinante();
+  try {
+    if (!fs.existsSync(arquivo)) return {};
+    const bruto = JSON.parse(fs.readFileSync(arquivo, 'utf8').replace(/^\uFEFF/, ''));
+    return bruto && typeof bruto === 'object' ? bruto : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function gravarCofreCredenciais(cofre) {
+  const arquivo = caminhoCredenciaisAssinante();
+  fs.mkdirSync(path.dirname(arquivo), { recursive: true });
+  fs.writeFileSync(arquivo, JSON.stringify(cofre, null, 2), 'utf8');
+}
+
+function descriptografarCredenciaisAssinante(provedor) {
+  const p = normalizarProvedor(provedor);
+  const cofre = lerCofreCredenciais();
+  const registro = cofre[p];
+  if (!registro || !registro.payload) return null;
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('A proteção de credenciais do Windows não está disponível neste computador.');
+  }
+
+  try {
+    const buffer = Buffer.from(String(registro.payload), 'base64');
+    const texto = safeStorage.decryptString(buffer);
+    const dados = JSON.parse(texto);
+    const usuario = String(dados?.usuario || '').trim();
+    const senha = String(dados?.senha || '');
+    if (!usuario || !senha) return null;
+    return { usuario, senha };
+  } catch (_) {
+    throw new Error('Não foi possível abrir as credenciais salvas neste Windows. Apague e salve o acesso novamente.');
+  }
+}
+
+function obterResumoCredenciaisAssinante(provedor) {
+  const credenciais = descriptografarCredenciaisAssinante(provedor);
+  if (!credenciais) return { ok: true, salvo: false, usuario: '', temSenha: false };
+  return {
+    ok: true,
+    salvo: true,
+    usuario: credenciais.usuario,
+    temSenha: !!credenciais.senha
+  };
+}
+
+function salvarCredenciaisAssinante(provedor, dados = {}) {
+  const p = normalizarProvedor(provedor);
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('A proteção de credenciais do Windows não está disponível neste computador. O acesso não será salvo sem criptografia.');
+  }
+
+  const usuario = String(dados.usuario || '').trim();
+  if (!usuario) throw new Error('Informe o usuário/e-mail da assinatura.');
+
+  let senha = String(dados.senha || '');
+  if (!senha) {
+    const anterior = descriptografarCredenciaisAssinante(p);
+    senha = String(anterior?.senha || '');
+  }
+  if (!senha) throw new Error('Informe a senha da assinatura.');
+
+  const payload = safeStorage
+    .encryptString(JSON.stringify({ usuario, senha }))
+    .toString('base64');
+
+  const cofre = lerCofreCredenciais();
+  cofre[p] = {
+    payload,
+    atualizadoEm: new Date().toISOString(),
+    formato: 1
+  };
+  gravarCofreCredenciais(cofre);
+
+  return { ok: true, salvo: true, usuario, temSenha: true };
+}
+
+function apagarCredenciaisAssinante(provedor) {
+  const p = normalizarProvedor(provedor);
+  const cofre = lerCofreCredenciais();
+  if (Object.prototype.hasOwnProperty.call(cofre, p)) {
+    delete cofre[p];
+    if (Object.keys(cofre).length) gravarCofreCredenciais(cofre);
+    else {
+      try { fs.unlinkSync(caminhoCredenciaisAssinante()); } catch (_) {}
+    }
+  }
+  return { ok: true, salvo: false, usuario: '', temSenha: false };
 }
 
 function carregarConfigProxyLocal() {
@@ -172,6 +277,27 @@ app.on('window-all-closed', () => {
 });
 
 ipcMain.handle('extrair-materia', async (_event, opcoes) => extrairMateriaGUI(opcoes));
+ipcMain.handle('obter-credenciais-assinante', async (_event, provedor) => {
+  try {
+    return obterResumoCredenciaisAssinante(provedor);
+  } catch (erro) {
+    return { ok: false, erro: erro?.message || String(erro), salvo: false, usuario: '', temSenha: false };
+  }
+});
+ipcMain.handle('salvar-credenciais-assinante', async (_event, provedor, dados) => {
+  try {
+    return salvarCredenciaisAssinante(provedor, dados || {});
+  } catch (erro) {
+    return { ok: false, erro: erro?.message || String(erro) };
+  }
+});
+ipcMain.handle('apagar-credenciais-assinante', async (_event, provedor) => {
+  try {
+    return apagarCredenciaisAssinante(provedor);
+  } catch (erro) {
+    return { ok: false, erro: erro?.message || String(erro) };
+  }
+});
 ipcMain.handle('obter-estado', async () => ({
   ultimoExiste: fs.existsSync(caminhoUltimo()),
   historicoExiste: fs.existsSync(caminhoHistorico()),
@@ -180,6 +306,9 @@ ipcMain.handle('obter-estado', async () => ({
   proxyConfigurado: (() => {
     const c = carregarConfigProxyLocal();
     return !!(String(c.SERVIDOR || '').trim() && String(c.PORTA || '').trim());
+  })(),
+  acessoAssinanteValorSalvo: (() => {
+    try { return obterResumoCredenciaisAssinante(PROVEDOR_VALOR_GLOBO).salvo; } catch (_) { return false; }
   })()
 }));
 ipcMain.handle('abrir-ultimo', async () => {

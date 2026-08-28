@@ -1,4 +1,4 @@
-name: Build Windows Portable V1.25.12
+name: Build Windows Portable V1.25.13
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar base aprovada e camada V1.25.12
+      - name: Confirmar base aprovada e camada V1.25.13
         shell: powershell
         run: |
           $arquivos = @(
@@ -33,16 +33,19 @@ jobs:
             "renderer/index.html",
             "renderer/renderer.js",
             "renderer/styles.css",
+            "engine/config-proxy.json",
             "engine/extrator-materia-v1.25.1.js",
             "engine/extrator-materia-v1.25.10.js",
             "engine/extrator-materia-v1.25.10-runtime-base.js",
             "engine/extrator-materia-v1.25.10-runtime.js",
             "engine/extrator-materia-v1.25.11-runtime.js",
             "engine/extrator-materia-v1.25.12-runtime.js",
+            "engine/extrator-materia-v1.25.13-runtime.js",
             "engine/correcoes-g1-v1.25.10.js",
             "tests/test-g1-hotfix.js",
             "tests/test-v1.25.11.js",
-            "tests/test-v1.25.12.js"
+            "tests/test-v1.25.12.js",
+            "tests/test-v1.25.13.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -56,6 +59,9 @@ jobs:
           Select-String -Path "renderer/index.html" -Pattern "Texto da matéria" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Abrir histórico" -SimpleMatch
           Select-String -Path "renderer/index.html" -Pattern "Abrir pasta" -SimpleMatch
+          Select-String -Path "renderer/index.html" -Pattern 'id="senha" type="text"' -SimpleMatch
+          Select-String -Path "engine/config-proxy.json" -Pattern '"SERVIDOR": "proxy-7dn.mb"' -SimpleMatch
+          Select-String -Path "engine/config-proxy.json" -Pattern '"PORTA": "6060"' -SimpleMatch
           Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
           node --check "renderer/renderer.js"
           node --check "engine/extrator-materia-v1.25.10.js"
@@ -63,10 +69,12 @@ jobs:
           node --check "engine/extrator-materia-v1.25.10-runtime.js"
           node --check "engine/extrator-materia-v1.25.11-runtime.js"
           node --check "engine/extrator-materia-v1.25.12-runtime.js"
+          node --check "engine/extrator-materia-v1.25.13-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
           node --check "tests/test-g1-hotfix.js"
           node --check "tests/test-v1.25.11.js"
           node --check "tests/test-v1.25.12.js"
+          node --check "tests/test-v1.25.13.js"
           node --check "main.js"
 
       - name: Testes de regressao
@@ -74,6 +82,7 @@ jobs:
           node tests/test-g1-hotfix.js
           node tests/test-v1.25.11.js
           node tests/test-v1.25.12.js
+          node tests/test-v1.25.13.js
 
       - name: Gerar EXE Portable
         run: npm run dist
@@ -81,41 +90,42 @@ jobs:
       - name: Verificar executavel
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.12.exe")) {
-            Write-Error "O executavel V1.25.12 nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.13.exe")) {
+            Write-Error "O executavel V1.25.13 nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorMateriasPortable-V1.25.12.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.13.exe" | Format-List Name,Length,FullName
 
       - name: Criar pacote ZIP
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorMateriasPortable-V1.25.12.exe" "package/ExtratorMateriasPortable-V1.25.12.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.13.exe" "package/ExtratorMateriasPortable-V1.25.13.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.12.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.13.zip" -Force
 
-      - name: Enviar artefato V1.25.12
+      - name: Enviar artefato V1.25.13
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorMaterias-Windows-Portable-V1.25.12
-          path: ExtratorMaterias-Windows-Portable-V1.25.12.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.13
+          path: ExtratorMaterias-Windows-Portable-V1.25.13.zip
           if-no-files-found: error
 
-      - name: Publicar Release V1.25.12
+      - name: Publicar Release V1.25.13
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.12
+          tag_name: v1.25.13
           target_commitish: main
-          name: Extrator de Matérias Windows Portable V1.25.12
+          name: Extrator de Matérias Windows Portable V1.25.13
           body: |
-            Versão Windows V1.25.12 com correção pontual para o Valor Econômico, preservando layout, proxy, histórico, edição e todas as correções da V1.25.11.
-            - mantém primeiro a extração normal já aprovada;
-            - se uma URL do Valor falhar, tenta a rota oficial google/amp da mesma matéria;
-            - não altera as regras existentes de limpeza do Valor;
-            - não tenta contornar conteúdo que exija assinatura/autenticação;
-            - testes anteriores do G1 e da V1.25.11 continuam obrigatórios no build.
-            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.12.zip
+            Versão Windows V1.25.13 com correção da conexão por proxy, preservando integralmente o motor e as correções da V1.25.12.
+            - restaura servidor e porta do proxy corporativo no pacote;
+            - corrige o bloqueio que impedia extrações quando o proxy era selecionado e a configuração estava vazia;
+            - mantém usuário e senha somente na memória da sessão;
+            - deixa a senha do proxy visível na interface;
+            - preserva as correções de G1, Valor, BNews, Zona Militar, Fator Brasil e Defesa Aérea & Naval;
+            - adiciona teste obrigatório para impedir release futura com proxy vazio.
+            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.13.zip
           prerelease: false
           make_latest: true
-          files: ExtratorMaterias-Windows-Portable-V1.25.12.zip
+          files: ExtratorMaterias-Windows-Portable-V1.25.13.zip

@@ -18,6 +18,13 @@ const usuario = document.getElementById('usuario');
 const senha = document.getElementById('senha');
 const successMark = document.getElementById('successMark');
 
+const assinanteUsuario = document.getElementById('assinanteUsuario');
+const assinanteSenha = document.getElementById('assinanteSenha');
+const assinanteStatus = document.getElementById('assinanteStatus');
+const salvarAssinante = document.getElementById('salvarAssinante');
+const apagarAssinante = document.getElementById('apagarAssinante');
+const PROVEDOR_ASSINANTE = 'valorGlobo';
+
 const metaTitulo = document.getElementById('metaTitulo');
 const metaVeiculo = document.getElementById('metaVeiculo');
 const metaData = document.getElementById('metaData');
@@ -26,6 +33,7 @@ const metaSubtitulo = document.getElementById('metaSubtitulo');
 const metaLink = document.getElementById('metaLink');
 
 let extraindo = false;
+let assinanteSenhaSalva = false;
 
 function urlInformadaValida() {
   return /^https?:\/\/\S+/i.test(url.value.trim());
@@ -54,6 +62,107 @@ usarProxy.addEventListener('change', () => {
   camposProxy.classList.toggle('oculto', !usarProxy.checked);
   if (usarProxy.checked) usuario.focus();
 });
+
+async function carregarAcessoAssinante() {
+  if (!assinanteUsuario || !assinanteSenha || !assinanteStatus) return;
+
+  try {
+    const r = await window.extratorAPI.obterCredenciaisAssinante(PROVEDOR_ASSINANTE);
+    if (!r.ok) {
+      assinanteSenhaSalva = false;
+      assinanteStatus.textContent = r.erro || 'Não foi possível consultar o acesso salvo.';
+      apagarAssinante.disabled = true;
+      return;
+    }
+
+    assinanteSenhaSalva = !!(r.salvo && r.temSenha);
+    assinanteUsuario.value = r.usuario || '';
+    assinanteSenha.value = '';
+
+    if (assinanteSenhaSalva) {
+      assinanteSenha.placeholder = 'Senha já salva com segurança';
+      assinanteStatus.textContent = '✓ Acesso Valor / Globo salvo neste computador. Não é necessário digitar a senha novamente.';
+      apagarAssinante.disabled = false;
+    } else {
+      assinanteSenha.placeholder = 'Digite uma vez para salvar';
+      assinanteStatus.textContent = 'Nenhum acesso de assinante salvo neste computador.';
+      apagarAssinante.disabled = true;
+    }
+  } catch (e) {
+    assinanteSenhaSalva = false;
+    assinanteStatus.textContent = 'Falha ao consultar o acesso salvo: ' + (e?.message || e);
+    apagarAssinante.disabled = true;
+  }
+}
+
+async function salvarAcessoAssinante() {
+  const usuarioAssinante = assinanteUsuario.value.trim();
+  const senhaNova = assinanteSenha.value;
+
+  if (!usuarioAssinante) {
+    assinanteStatus.textContent = 'Informe o usuário/e-mail da assinatura.';
+    assinanteUsuario.focus();
+    return;
+  }
+  if (!senhaNova && !assinanteSenhaSalva) {
+    assinanteStatus.textContent = 'Informe a senha da assinatura na primeira vez.';
+    assinanteSenha.focus();
+    return;
+  }
+
+  salvarAssinante.disabled = true;
+  assinanteStatus.textContent = 'Salvando acesso com proteção do Windows…';
+  try {
+    const r = await window.extratorAPI.salvarCredenciaisAssinante(PROVEDOR_ASSINANTE, {
+      usuario: usuarioAssinante,
+      senha: senhaNova
+    });
+
+    if (!r.ok) {
+      assinanteStatus.textContent = r.erro || 'Não foi possível salvar o acesso.';
+      definirStatus('Não foi possível salvar o acesso de assinante.', 'error');
+      return;
+    }
+
+    assinanteSenhaSalva = true;
+    assinanteUsuario.value = r.usuario || usuarioAssinante;
+    assinanteSenha.value = '';
+    assinanteSenha.placeholder = 'Senha já salva com segurança';
+    assinanteStatus.textContent = '✓ Acesso Valor / Globo salvo neste computador. Nas próximas aberturas ele continuará cadastrado.';
+    apagarAssinante.disabled = false;
+    definirStatus('✓ Acesso de assinante salvo com proteção local do Windows.', 'success');
+  } catch (e) {
+    assinanteStatus.textContent = 'Erro ao salvar acesso: ' + (e?.message || e);
+    definirStatus('Erro ao salvar o acesso de assinante.', 'error');
+  } finally {
+    salvarAssinante.disabled = false;
+  }
+}
+
+async function apagarAcessoAssinante() {
+  if (!assinanteSenhaSalva) return;
+  const confirmar = window.confirm('Apagar o acesso Valor / Globo salvo neste computador?');
+  if (!confirmar) return;
+
+  apagarAssinante.disabled = true;
+  try {
+    const r = await window.extratorAPI.apagarCredenciaisAssinante(PROVEDOR_ASSINANTE);
+    if (!r.ok) {
+      assinanteStatus.textContent = r.erro || 'Não foi possível apagar o acesso salvo.';
+      return;
+    }
+    assinanteSenhaSalva = false;
+    assinanteUsuario.value = '';
+    assinanteSenha.value = '';
+    assinanteSenha.placeholder = 'Digite uma vez para salvar';
+    assinanteStatus.textContent = 'Acesso salvo apagado deste computador.';
+    definirStatus('Acesso de assinante removido.', 'ready');
+  } catch (e) {
+    assinanteStatus.textContent = 'Erro ao apagar acesso: ' + (e?.message || e);
+  } finally {
+    apagarAssinante.disabled = !assinanteSenhaSalva;
+  }
+}
 
 function preencherMetadados(retorno) {
   metaTitulo.textContent = retorno.titulo || 'Não identificado';
@@ -210,6 +319,8 @@ btnHistorico.addEventListener('click', abrirHistorico);
 btnPasta.addEventListener('click', abrirPasta);
 btnLimpar.addEventListener('click', limparTela);
 btnCopiar.addEventListener('click', copiarResultado);
+if (salvarAssinante) salvarAssinante.addEventListener('click', salvarAcessoAssinante);
+if (apagarAssinante) apagarAssinante.addEventListener('click', apagarAcessoAssinante);
 
 url.addEventListener('input', sincronizarBotaoExtrair);
 url.addEventListener('change', sincronizarBotaoExtrair);
@@ -234,4 +345,7 @@ url.addEventListener('keydown', (e) => {
 });
 
 sincronizarBotaoExtrair();
-atualizarEstado().catch(() => {});
+Promise.all([
+  atualizarEstado().catch(() => {}),
+  carregarAcessoAssinante().catch(() => {})
+]);

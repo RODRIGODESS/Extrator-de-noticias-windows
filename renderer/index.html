@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <title>Extrator de Matérias V1.25.13</title>
+  <title>Extrator de Matérias V1.25.17</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -41,6 +41,10 @@
           <span class="nav-icon" aria-hidden="true">⚙</span>
           <span>Conexão / Proxy</span>
         </button>
+        <button class="nav-item" type="button" data-scroll="assinanteCard">
+          <span class="nav-icon" aria-hidden="true">▣</span>
+          <span>Acesso de assinante</span>
+        </button>
       </nav>
 
       <div class="sidebar-spacer"></div>
@@ -50,7 +54,7 @@
           <span class="shield" aria-hidden="true">◇</span>
           <span>Motor de Extração</span>
         </div>
-        <strong id="versaoSidebar">V1.25.13</strong>
+        <strong id="versaoSidebar">V1.25.17</strong>
         <small>Estrutura antiga preservada</small>
       </section>
     </aside>
@@ -140,6 +144,38 @@
         </div>
       </details>
 
+      <details class="card proxy-card" id="assinanteCard">
+        <summary>
+          <span class="summary-main">
+            <span class="summary-icon" aria-hidden="true">🔐</span>
+            <span>
+              <strong>Acesso de assinante</strong>
+              <small>Valor / Globo — salvo com proteção local do Windows</small>
+            </span>
+          </span>
+          <span class="chevron" aria-hidden="true">⌄</span>
+        </summary>
+
+        <div class="proxy-content">
+          <div class="proxy-fields">
+            <label>
+              <span>Usuário / e-mail Valor / Globo</span>
+              <input id="assinanteUsuario" type="text" autocomplete="username" placeholder="Seu usuário ou e-mail" />
+            </label>
+            <label>
+              <span>Senha</span>
+              <input id="assinanteSenha" type="password" autocomplete="current-password" placeholder="Digite uma vez para salvar" />
+            </label>
+            <p id="assinanteStatus">Nenhum acesso de assinante salvo neste computador.</p>
+          </div>
+          <div class="secondary-actions">
+            <button id="salvarAssinante" class="btn btn-primary" type="button">Salvar acesso</button>
+            <button id="apagarAssinante" class="btn btn-ghost" type="button">Apagar acesso salvo</button>
+          </div>
+          <p class="helper" style="margin-left:0;">A senha é criptografada pelo Windows e não é gravada no GitHub nem dentro do ZIP. Depois de salva, você não precisa digitá-la novamente para mantê-la cadastrada.</p>
+        </div>
+      </details>
+
       <section class="results-grid" aria-label="Resultado da extração">
         <article class="card metadata-card">
           <div class="card-heading compact">
@@ -219,7 +255,7 @@
 
       <footer class="footer-bar">
         <span><span class="footer-dot" aria-hidden="true"></span> Interface otimizada para Windows</span>
-        <span id="versao">Motor V1.25.13</span>
+        <span id="versao">Motor V1.25.17</span>
       </footer>
     </main>
   </div>

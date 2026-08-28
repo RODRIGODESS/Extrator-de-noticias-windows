@@ -1,7 +1,7 @@
 {
-  "name": "extrator-materias-portable-v12513",
-  "version": "1.25.13",
-  "description": "Extrator de Materias Windows Portable V1.25.13 com proxy corporativo restaurado e senha visivel, preservando o motor V1.25.12",
+  "name": "extrator-materias-portable-v12514",
+  "version": "1.25.14",
+  "description": "Extrator de Materias Windows Portable V1.25.14 com recuperação de corpo curto do Valor, preservando proxy e correções anteriores",
   "main": "main.js",
   "author": "",
   "license": "UNLICENSED",
@@ -19,8 +19,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "br.com.extratormaterias.v12513",
-    "productName": "Extrator de Materias V1.25.13",
+    "appId": "br.com.extratormaterias.v12514",
+    "productName": "Extrator de Materias V1.25.14",
     "asar": true,
     "files": [
       "main.js",
@@ -32,7 +32,7 @@
     ],
     "win": {
       "icon": "assets/extrator-materias-moderno.ico",
-      "artifactName": "ExtratorMateriasPortable-V1.25.13.exe",
+      "artifactName": "ExtratorMateriasPortable-V1.25.14.exe",
       "target": [
         {
           "target": "portable",
@@ -41,7 +41,7 @@
       ]
     },
     "portable": {
-      "artifactName": "ExtratorMateriasPortable-V1.25.13.exe"
+      "artifactName": "ExtratorMateriasPortable-V1.25.14.exe"
     }
   }
 }

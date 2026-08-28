@@ -1,7 +1,7 @@
 {
-  "name": "extrator-materias-portable-v12511",
-  "version": "1.25.11",
-  "description": "Extrator de Materias Windows Portable V1.25.11 com fallbacks pontuais de extracao sobre a base V1.25.10",
+  "name": "extrator-materias-portable-v12512",
+  "version": "1.25.12",
+  "description": "Extrator de Materias Windows Portable V1.25.12 com fallback AMP pontual para o Valor sobre a base V1.25.11",
   "main": "main.js",
   "author": "",
   "license": "UNLICENSED",
@@ -19,8 +19,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "br.com.extratormaterias.v12511",
-    "productName": "Extrator de Materias V1.25.11",
+    "appId": "br.com.extratormaterias.v12512",
+    "productName": "Extrator de Materias V1.25.12",
     "asar": true,
     "files": [
       "main.js",
@@ -32,7 +32,7 @@
     ],
     "win": {
       "icon": "assets/extrator-materias-moderno.ico",
-      "artifactName": "ExtratorMateriasPortable-V1.25.11.exe",
+      "artifactName": "ExtratorMateriasPortable-V1.25.12.exe",
       "target": [
         {
           "target": "portable",
@@ -41,7 +41,7 @@
       ]
     },
     "portable": {
-      "artifactName": "ExtratorMateriasPortable-V1.25.11.exe"
+      "artifactName": "ExtratorMateriasPortable-V1.25.12.exe"
     }
   }
 }

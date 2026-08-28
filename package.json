@@ -19,8 +19,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "br.com.extratormaterias.v12517",
-    "productName": "Extrator de Materias V1.25.17",
+    "appId": "br.com.extratormaterias",
+    "productName": "Extrator de Materias",
     "asar": true,
     "files": [
       "main.js",

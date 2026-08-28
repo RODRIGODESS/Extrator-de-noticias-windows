@@ -1,7 +1,7 @@
 {
-  "name": "extrator-materias-portable-v12515",
-  "version": "1.25.15",
-  "description": "Extrator de Materias Windows Portable V1.25.15 com correção do botão Extrair matéria, preservando motor V1.25.14 e proxy",
+  "name": "extrator-materias-portable-v12516",
+  "version": "1.25.16",
+  "description": "Extrator de Materias Windows Portable V1.25.16 com rotas independentes do Valor, preservando botão, proxy e correções anteriores",
   "main": "main.js",
   "author": "",
   "license": "UNLICENSED",
@@ -19,8 +19,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "br.com.extratormaterias.v12515",
-    "productName": "Extrator de Materias V1.25.15",
+    "appId": "br.com.extratormaterias.v12516",
+    "productName": "Extrator de Materias V1.25.16",
     "asar": true,
     "files": [
       "main.js",
@@ -32,7 +32,7 @@
     ],
     "win": {
       "icon": "assets/extrator-materias-moderno.ico",
-      "artifactName": "ExtratorMateriasPortable-V1.25.15.exe",
+      "artifactName": "ExtratorMateriasPortable-V1.25.16.exe",
       "target": [
         {
           "target": "portable",
@@ -41,7 +41,7 @@
       ]
     },
     "portable": {
-      "artifactName": "ExtratorMateriasPortable-V1.25.15.exe"
+      "artifactName": "ExtratorMateriasPortable-V1.25.16.exe"
     }
   }
 }

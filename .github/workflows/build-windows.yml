@@ -1,4 +1,4 @@
-name: Build Windows Portable V1.25.15
+name: Build Windows Portable V1.25.16
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar base aprovada e camada V1.25.15
+      - name: Confirmar base aprovada e camada V1.25.16
         shell: powershell
         run: |
           $arquivos = @(
@@ -43,13 +43,15 @@ jobs:
             "engine/extrator-materia-v1.25.13-runtime.js",
             "engine/extrator-materia-v1.25.14-runtime.js",
             "engine/extrator-materia-v1.25.15-runtime.js",
+            "engine/extrator-materia-v1.25.16-runtime.js",
             "engine/correcoes-g1-v1.25.10.js",
             "tests/test-g1-hotfix.js",
             "tests/test-v1.25.11.js",
             "tests/test-v1.25.12.js",
             "tests/test-v1.25.13.js",
             "tests/test-v1.25.14.js",
-            "tests/test-v1.25.15.js"
+            "tests/test-v1.25.15.js",
+            "tests/test-v1.25.16.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -69,7 +71,7 @@ jobs:
           Select-String -Path "renderer/renderer.js" -Pattern "url.addEventListener('paste'" -SimpleMatch
           Select-String -Path "engine/config-proxy.json" -Pattern '"SERVIDOR": "proxy-7dn.mb"' -SimpleMatch
           Select-String -Path "engine/config-proxy.json" -Pattern '"PORTA": "6060"' -SimpleMatch
-          Select-String -Path "engine/extrator-materia-v1.25.10-runtime.js" -Pattern "extrator-materia-v1.25.15-runtime.js" -SimpleMatch
+          Select-String -Path "engine/extrator-materia-v1.25.10-runtime.js" -Pattern "extrator-materia-v1.25.16-runtime.js" -SimpleMatch
           Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
           node --check "renderer/renderer.js"
           node --check "engine/extrator-materia-v1.25.10.js"
@@ -80,6 +82,7 @@ jobs:
           node --check "engine/extrator-materia-v1.25.13-runtime.js"
           node --check "engine/extrator-materia-v1.25.14-runtime.js"
           node --check "engine/extrator-materia-v1.25.15-runtime.js"
+          node --check "engine/extrator-materia-v1.25.16-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
           node --check "tests/test-g1-hotfix.js"
           node --check "tests/test-v1.25.11.js"
@@ -87,6 +90,7 @@ jobs:
           node --check "tests/test-v1.25.13.js"
           node --check "tests/test-v1.25.14.js"
           node --check "tests/test-v1.25.15.js"
+          node --check "tests/test-v1.25.16.js"
           node --check "main.js"
 
       - name: Testes de regressao
@@ -97,6 +101,7 @@ jobs:
           node tests/test-v1.25.13.js
           node tests/test-v1.25.14.js
           node tests/test-v1.25.15.js
+          node tests/test-v1.25.16.js
 
       - name: Gerar EXE Portable
         run: npm run dist
@@ -104,43 +109,45 @@ jobs:
       - name: Verificar executavel
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.15.exe")) {
-            Write-Error "O executavel V1.25.15 nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.16.exe")) {
+            Write-Error "O executavel V1.25.16 nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorMateriasPortable-V1.25.15.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.16.exe" | Format-List Name,Length,FullName
 
       - name: Criar pacote ZIP
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorMateriasPortable-V1.25.15.exe" "package/ExtratorMateriasPortable-V1.25.15.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.16.exe" "package/ExtratorMateriasPortable-V1.25.16.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.15.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.16.zip" -Force
 
-      - name: Enviar artefato V1.25.15
+      - name: Enviar artefato V1.25.16
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorMaterias-Windows-Portable-V1.25.15
-          path: ExtratorMaterias-Windows-Portable-V1.25.15.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.16
+          path: ExtratorMaterias-Windows-Portable-V1.25.16.zip
           if-no-files-found: error
 
-      - name: Publicar Release V1.25.15
+      - name: Publicar Release V1.25.16
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.15
+          tag_name: v1.25.16
           target_commitish: main
-          name: Extrator de Matérias Windows Portable V1.25.15
+          name: Extrator de Matérias Windows Portable V1.25.16
           body: |
-            Versão Windows V1.25.15 com correção pontual do botão Extrair matéria.
-            - preserva integralmente o motor V1.25.14, inclusive recuperação de corpo curto do Valor;
+            Versão Windows V1.25.16 com correção da falha total nas tentativas do Valor.
+            - preserva integralmente a correção do botão da V1.25.15;
             - preserva proxy corporativo e senha visível;
-            - botão fica desabilitado quando o campo está vazio ou sem URL válida;
-            - habilita imediatamente ao digitar ou colar uma URL iniciada por http:// ou https://;
-            - sincroniza o botão após input, paste, change, Limpar, erro e término da extração;
-            - atualiza o título da janela com a versão ativa do motor;
-            - mantém todos os testes anteriores e adiciona regressão específica da interface.
-            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.15.zip
+            - testa URL normal e AMP do Valor de forma independente;
+            - uma falha na rota complementar não descarta uma matéria válida já obtida;
+            - mantém o melhor corpo público disponível entre as rotas;
+            - quando o parser falha, tenta o HTML público entregue pelo próprio site;
+            - se todas as rotas públicas forem recusadas, informa claramente a necessidade de sessão autenticada autorizada para conteúdo de assinante;
+            - não usa credenciais, cookies ou mecanismos de contorno de assinatura nesta versão;
+            - mantém todos os testes anteriores e adiciona regressão específica para 403/falha complementar do Valor.
+            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.16.zip
           prerelease: false
           make_latest: true
-          files: ExtratorMaterias-Windows-Portable-V1.25.15.zip
+          files: ExtratorMaterias-Windows-Portable-V1.25.16.zip

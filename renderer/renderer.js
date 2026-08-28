@@ -25,6 +25,16 @@ const metaAutor = document.getElementById('metaAutor');
 const metaSubtitulo = document.getElementById('metaSubtitulo');
 const metaLink = document.getElementById('metaLink');
 
+let extraindo = false;
+
+function urlInformadaValida() {
+  return /^https?:\/\/\S+/i.test(url.value.trim());
+}
+
+function sincronizarBotaoExtrair() {
+  btnExtrair.disabled = extraindo || !urlInformadaValida();
+}
+
 function classificarStatus(mensagem = '') {
   const t = String(mensagem).toLowerCase();
   if (/erro|não foi|nao foi|precisa|informe|cole o link|já existe|ja existe/.test(t)) return 'error';
@@ -82,6 +92,8 @@ async function atualizarEstado() {
     const texto = 'Motor ' + estado.versaoMotor;
     versao.textContent = texto;
     versaoSidebar.textContent = estado.versaoMotor;
+    const versaoCurta = String(estado.versaoMotor).split('-')[0];
+    if (versaoCurta) document.title = 'Extrator de Matérias V' + versaoCurta;
   }
 }
 
@@ -90,11 +102,13 @@ async function extrair() {
   if (!informado) {
     definirStatus('Cole o link da matéria.', 'error');
     url.focus();
+    sincronizarBotaoExtrair();
     return;
   }
   if (!/^https?:\/\/.+/i.test(informado)) {
     definirStatus('O link precisa começar com http:// ou https://', 'error');
     url.focus();
+    sincronizarBotaoExtrair();
     return;
   }
   if (usarProxy.checked && !usuario.value.trim()) {
@@ -108,7 +122,8 @@ async function extrair() {
     return;
   }
 
-  btnExtrair.disabled = true;
+  extraindo = true;
+  sincronizarBotaoExtrair();
   btnExtrair.setAttribute('aria-busy', 'true');
   exibirResultado('');
   limparMetadados();
@@ -137,8 +152,9 @@ async function extrair() {
     definirStatus('Erro ao processar: ' + (e?.message || e), 'error');
     info.textContent = 'Falha na extração';
   } finally {
-    btnExtrair.disabled = false;
+    extraindo = false;
     btnExtrair.removeAttribute('aria-busy');
+    sincronizarBotaoExtrair();
   }
 }
 
@@ -184,6 +200,7 @@ function limparTela() {
   limparMetadados();
   info.textContent = 'Nenhuma matéria extraída';
   definirStatus('Pronto para receber um link.', 'ready');
+  sincronizarBotaoExtrair();
   url.focus();
 }
 
@@ -193,6 +210,10 @@ btnHistorico.addEventListener('click', abrirHistorico);
 btnPasta.addEventListener('click', abrirPasta);
 btnLimpar.addEventListener('click', limparTela);
 btnCopiar.addEventListener('click', copiarResultado);
+
+url.addEventListener('input', sincronizarBotaoExtrair);
+url.addEventListener('change', sincronizarBotaoExtrair);
+url.addEventListener('paste', () => setTimeout(sincronizarBotaoExtrair, 0));
 
 document.querySelectorAll('[data-action="historico"]').forEach(el => el.addEventListener('click', abrirHistorico));
 document.querySelectorAll('[data-action="pasta"]').forEach(el => el.addEventListener('click', abrirPasta));
@@ -212,4 +233,5 @@ url.addEventListener('keydown', (e) => {
   }
 });
 
+sincronizarBotaoExtrair();
 atualizarEstado().catch(() => {});

@@ -10,8 +10,8 @@
     "dist": "electron-builder --win portable --x64"
   },
   "dependencies": {
-    "@cspell/dict-pt-br": "2.4.2",
     "@mozilla/readability": "^0.6.0",
+    "cspell-dict-pt-br": "1.1.1",
     "cspell-lib": "10.1.1",
     "jsdom": "^26.1.0",
     "undici": "7.29.0"

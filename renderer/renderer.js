@@ -18,6 +18,10 @@ const usuario = document.getElementById('usuario');
 const senha = document.getElementById('senha');
 const successMark = document.getElementById('successMark');
 
+const revisarRigido = document.getElementById('revisarRigido');
+const revisaoRigidaStatus = document.getElementById('revisaoRigidaStatus');
+const revisaoRigidaLista = document.getElementById('revisaoRigidaLista');
+
 const assinanteUsuario = document.getElementById('assinanteUsuario');
 const assinanteSenha = document.getElementById('assinanteSenha');
 const assinanteStatus = document.getElementById('assinanteStatus');
@@ -34,6 +38,9 @@ const metaLink = document.getElementById('metaLink');
 
 let extraindo = false;
 let assinanteSenhaSalva = false;
+let revisandoRigido = false;
+let revisaoRigidaIssues = [];
+let revisaoRigidaTimer = null;
 
 function urlInformadaValida() {
   return /^https?:\/\/\S+/i.test(url.value.trim());
@@ -186,11 +193,209 @@ function limparMetadados() {
   successMark.classList.remove('ativo');
 }
 
+function limparDestaquesRigidos() {
+  try {
+    if (window.CSS?.highlights) CSS.highlights.delete('corretor-rigido-ptbr');
+  } catch (_) {}
+}
+
+function localizarOffsetTexto(root, offset) {
+  const alvo = Math.max(0, Number(offset) || 0);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let acumulado = 0;
+  let ultimo = null;
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    ultimo = node;
+    const tamanho = node.nodeValue?.length || 0;
+    if (alvo <= acumulado + tamanho) {
+      return { node, offset: Math.min(tamanho, alvo - acumulado) };
+    }
+    acumulado += tamanho;
+  }
+
+  if (ultimo) return { node: ultimo, offset: ultimo.nodeValue?.length || 0 };
+  return null;
+}
+
+function aplicarDestaquesRigidos(issues) {
+  limparDestaquesRigidos();
+  if (!issues?.length) return;
+  if (!window.CSS?.highlights || typeof Highlight === 'undefined') return;
+
+  const highlight = new Highlight();
+  const total = (resultado.textContent || '').length;
+
+  for (const issue of issues) {
+    const inicio = Math.max(0, Math.min(total, Number(issue.offset) || 0));
+    const fim = Math.max(inicio, Math.min(total, inicio + (Number(issue.length) || String(issue.palavra || '').length)));
+    const a = localizarOffsetTexto(resultado, inicio);
+    const b = localizarOffsetTexto(resultado, fim);
+    if (!a || !b) continue;
+
+    try {
+      const range = new Range();
+      range.setStart(a.node, a.offset);
+      range.setEnd(b.node, b.offset);
+      highlight.add(range);
+    } catch (_) {}
+  }
+
+  CSS.highlights.set('corretor-rigido-ptbr', highlight);
+}
+
+function selecionarIssue(issue) {
+  const inicio = localizarOffsetTexto(resultado, issue.offset);
+  const fim = localizarOffsetTexto(resultado, Number(issue.offset) + Number(issue.length || String(issue.palavra || '').length));
+  if (!inicio || !fim) return;
+
+  try {
+    const range = new Range();
+    range.setStart(inicio.node, inicio.offset);
+    range.setEnd(fim.node, fim.offset);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    resultado.focus();
+  } catch (_) {}
+}
+
+async function substituirIssue(issue, sugestao) {
+  const texto = resultado.textContent || '';
+  const inicio = Number(issue.offset) || 0;
+  const tamanho = Number(issue.length) || String(issue.palavra || '').length;
+  const atual = texto.slice(inicio, inicio + tamanho);
+
+  if (atual !== issue.palavra) {
+    await revisarTextoRigido();
+    return;
+  }
+
+  resultado.textContent = texto.slice(0, inicio) + sugestao + texto.slice(inicio + tamanho);
+  resultadoVazio.classList.add('oculto');
+  btnCopiar.disabled = false;
+  await revisarTextoRigido({ automatico: true });
+}
+
+function renderizarListaRevisao(issues) {
+  if (!revisaoRigidaLista) return;
+  revisaoRigidaLista.innerHTML = '';
+
+  if (!issues?.length) {
+    revisaoRigidaLista.classList.add('oculto');
+    return;
+  }
+
+  revisaoRigidaLista.classList.remove('oculto');
+  const limite = Math.min(40, issues.length);
+
+  for (let i = 0; i < limite; i++) {
+    const issue = issues[i];
+    const item = document.createElement('div');
+    item.className = 'revisao-issue';
+
+    const palavra = document.createElement('button');
+    palavra.type = 'button';
+    palavra.className = 'revisao-palavra';
+    palavra.textContent = issue.palavra;
+    palavra.title = 'Localizar no texto';
+    palavra.addEventListener('click', () => selecionarIssue(issue));
+    item.appendChild(palavra);
+
+    const sugestoes = document.createElement('div');
+    sugestoes.className = 'revisao-sugestoes';
+
+    if (issue.sugestoes?.length) {
+      for (const sugestao of issue.sugestoes.slice(0, 5)) {
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.className = 'revisao-sugestao';
+        botao.textContent = sugestao;
+        botao.addEventListener('click', () => substituirIssue(issue, sugestao));
+        sugestoes.appendChild(botao);
+      }
+    } else {
+      const sem = document.createElement('span');
+      sem.className = 'revisao-sem-sugestao';
+      sem.textContent = 'sem sugestão';
+      sugestoes.appendChild(sem);
+    }
+
+    item.appendChild(sugestoes);
+    revisaoRigidaLista.appendChild(item);
+  }
+
+  if (issues.length > limite) {
+    const mais = document.createElement('div');
+    mais.className = 'revisao-mais';
+    mais.textContent = `+ ${issues.length - limite} ocorrências adicionais`;
+    revisaoRigidaLista.appendChild(mais);
+  }
+}
+
+async function revisarTextoRigido({ automatico = false } = {}) {
+  if (!revisarRigido || revisandoRigido) return;
+  const texto = resultado.textContent || '';
+
+  if (!texto.trim()) {
+    revisaoRigidaIssues = [];
+    limparDestaquesRigidos();
+    renderizarListaRevisao([]);
+    revisarRigido.disabled = true;
+    revisaoRigidaStatus.textContent = 'Modo rígido aguardando texto.';
+    return;
+  }
+
+  revisandoRigido = true;
+  revisarRigido.disabled = true;
+  revisaoRigidaStatus.textContent = 'Revisando PT-BR com acentuação obrigatória…';
+
+  try {
+    const r = await window.extratorAPI.revisarTextoRigido(texto);
+    if (!r.ok) {
+      revisaoRigidaStatus.textContent = 'Revisão rígida indisponível: ' + (r.erro || 'erro desconhecido');
+      if (!automatico) definirStatus('Falha ao executar a revisão rígida PT-BR.', 'error');
+      return;
+    }
+
+    revisaoRigidaIssues = Array.isArray(r.issues) ? r.issues : [];
+    aplicarDestaquesRigidos(revisaoRigidaIssues);
+    renderizarListaRevisao(revisaoRigidaIssues);
+
+    if (revisaoRigidaIssues.length) {
+      revisaoRigidaStatus.textContent = `${revisaoRigidaIssues.length} possível(is) erro(s) — acentos e grafia verificados em modo rígido.`;
+      if (!automatico) definirStatus('Revisão rígida concluída com palavras para conferir.', 'ready');
+    } else {
+      revisaoRigidaStatus.textContent = '✓ Nenhum erro ortográfico encontrado pelo modo rígido PT-BR.';
+      if (!automatico) definirStatus('✓ Revisão rígida PT-BR concluída.', 'success');
+    }
+  } catch (e) {
+    revisaoRigidaStatus.textContent = 'Erro na revisão rígida: ' + (e?.message || e);
+    if (!automatico) definirStatus('Erro na revisão rígida PT-BR.', 'error');
+  } finally {
+    revisandoRigido = false;
+    revisarRigido.disabled = !(resultado.textContent || '').trim();
+  }
+}
+
+function agendarRevisaoRigida() {
+  clearTimeout(revisaoRigidaTimer);
+  revisaoRigidaTimer = setTimeout(() => revisarTextoRigido({ automatico: true }), 900);
+}
+
 function exibirResultado(texto = '') {
+  limparDestaquesRigidos();
+  revisaoRigidaIssues = [];
+  renderizarListaRevisao([]);
   resultado.textContent = texto;
   const temTexto = !!texto.trim();
   resultadoVazio.classList.toggle('oculto', temTexto);
   btnCopiar.disabled = !temTexto;
+  if (revisarRigido) revisarRigido.disabled = !temTexto;
+  if (revisaoRigidaStatus) revisaoRigidaStatus.textContent = temTexto
+    ? 'Modo rígido pronto para revisar acentos e grafia.'
+    : 'Modo rígido aguardando texto.';
 }
 
 async function atualizarEstado() {
@@ -253,6 +458,7 @@ async function extrair() {
       info.textContent = `${retorno.corpoCaracteres.toLocaleString('pt-BR')} caracteres`;
       definirStatus('✓ Extração concluída e salva.', 'success');
       await atualizarEstado();
+      await revisarTextoRigido({ automatico: true });
     } else {
       definirStatus(retorno.erro || 'Não foi possível concluir a extração.', 'error');
       info.textContent = 'Falha na extração';
@@ -304,6 +510,7 @@ async function copiarResultado() {
 }
 
 function limparTela() {
+  clearTimeout(revisaoRigidaTimer);
   url.value = '';
   exibirResultado('');
   limparMetadados();
@@ -319,8 +526,16 @@ btnHistorico.addEventListener('click', abrirHistorico);
 btnPasta.addEventListener('click', abrirPasta);
 btnLimpar.addEventListener('click', limparTela);
 btnCopiar.addEventListener('click', copiarResultado);
+if (revisarRigido) revisarRigido.addEventListener('click', () => revisarTextoRigido());
 if (salvarAssinante) salvarAssinante.addEventListener('click', salvarAcessoAssinante);
 if (apagarAssinante) apagarAssinante.addEventListener('click', apagarAcessoAssinante);
+
+resultado.addEventListener('input', () => {
+  const temTexto = !!(resultado.textContent || '').trim();
+  btnCopiar.disabled = !temTexto;
+  if (revisarRigido) revisarRigido.disabled = !temTexto;
+  agendarRevisaoRigida();
+});
 
 url.addEventListener('input', sincronizarBotaoExtrair);
 url.addEventListener('change', sincronizarBotaoExtrair);
@@ -345,6 +560,7 @@ url.addEventListener('keydown', (e) => {
 });
 
 sincronizarBotaoExtrair();
+if (revisarRigido) revisarRigido.disabled = true;
 Promise.all([
   atualizarEstado().catch(() => {}),
   carregarAcessoAssinante().catch(() => {})

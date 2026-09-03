@@ -1,4 +1,4 @@
-name: Build Windows Portable V1.25.17
+name: Build Windows Portable V1.25.18
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      - name: Confirmar base aprovada e camada V1.25.17
+      - name: Confirmar base aprovada e camada V1.25.18
         shell: powershell
         run: |
           $arquivos = @(
@@ -45,6 +45,7 @@ jobs:
             "engine/extrator-materia-v1.25.15-runtime.js",
             "engine/extrator-materia-v1.25.16-runtime.js",
             "engine/extrator-materia-v1.25.17-runtime.js",
+            "engine/extrator-materia-v1.25.18-runtime.js",
             "engine/correcoes-g1-v1.25.10.js",
             "tests/test-g1-hotfix.js",
             "tests/test-v1.25.11.js",
@@ -53,7 +54,8 @@ jobs:
             "tests/test-v1.25.14.js",
             "tests/test-v1.25.15.js",
             "tests/test-v1.25.16.js",
-            "tests/test-v1.25.17.js"
+            "tests/test-v1.25.17.js",
+            "tests/test-v1.25.18.js"
           )
           foreach ($a in $arquivos) {
             if (-not (Test-Path $a)) {
@@ -75,9 +77,14 @@ jobs:
           Select-String -Path "main.js" -Pattern "encryptString" -SimpleMatch
           Select-String -Path "main.js" -Pattern "decryptString" -SimpleMatch
           Select-String -Path "main.js" -Pattern "credenciais-assinante.json" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "setSpellCheckerEnabled(true)" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "setSpellCheckerLanguages" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "dictionarySuggestions" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "replaceMisspelling" -SimpleMatch
+          Select-String -Path "main.js" -Pattern "addWordToSpellCheckerDictionary" -SimpleMatch
           Select-String -Path "engine/config-proxy.json" -Pattern '"SERVIDOR": "proxy-7dn.mb"' -SimpleMatch
           Select-String -Path "engine/config-proxy.json" -Pattern '"PORTA": "6060"' -SimpleMatch
-          Select-String -Path "engine/extrator-materia-v1.25.10-runtime.js" -Pattern "extrator-materia-v1.25.17-runtime.js" -SimpleMatch
+          Select-String -Path "engine/extrator-materia-v1.25.10-runtime.js" -Pattern "extrator-materia-v1.25.18-runtime.js" -SimpleMatch
           Select-String -Path "main.js" -Pattern "extrator-materia-v1.25.10-runtime.js" -SimpleMatch
           node --check "renderer/renderer.js"
           node --check "engine/extrator-materia-v1.25.10.js"
@@ -90,6 +97,7 @@ jobs:
           node --check "engine/extrator-materia-v1.25.15-runtime.js"
           node --check "engine/extrator-materia-v1.25.16-runtime.js"
           node --check "engine/extrator-materia-v1.25.17-runtime.js"
+          node --check "engine/extrator-materia-v1.25.18-runtime.js"
           node --check "engine/correcoes-g1-v1.25.10.js"
           node --check "tests/test-g1-hotfix.js"
           node --check "tests/test-v1.25.11.js"
@@ -99,6 +107,7 @@ jobs:
           node --check "tests/test-v1.25.15.js"
           node --check "tests/test-v1.25.16.js"
           node --check "tests/test-v1.25.17.js"
+          node --check "tests/test-v1.25.18.js"
           node --check "main.js"
 
       - name: Testes de regressao
@@ -111,6 +120,7 @@ jobs:
           node tests/test-v1.25.15.js
           node tests/test-v1.25.16.js
           node tests/test-v1.25.17.js
+          node tests/test-v1.25.18.js
 
       - name: Gerar EXE Portable
         run: npm run dist
@@ -118,46 +128,46 @@ jobs:
       - name: Verificar executavel
         shell: powershell
         run: |
-          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.17.exe")) {
-            Write-Error "O executavel V1.25.17 nao foi encontrado"
+          if (-not (Test-Path "dist/ExtratorMateriasPortable-V1.25.18.exe")) {
+            Write-Error "O executavel V1.25.18 nao foi encontrado"
             exit 1
           }
-          Get-Item "dist/ExtratorMateriasPortable-V1.25.17.exe" | Format-List Name,Length,FullName
+          Get-Item "dist/ExtratorMateriasPortable-V1.25.18.exe" | Format-List Name,Length,FullName
 
       - name: Criar pacote ZIP
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item "dist/ExtratorMateriasPortable-V1.25.17.exe" "package/ExtratorMateriasPortable-V1.25.17.exe"
+          Copy-Item "dist/ExtratorMateriasPortable-V1.25.18.exe" "package/ExtratorMateriasPortable-V1.25.18.exe"
           Copy-Item "README.md" "package/README.md"
-          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.17.zip" -Force
+          Compress-Archive -Path "package/*" -DestinationPath "ExtratorMaterias-Windows-Portable-V1.25.18.zip" -Force
 
-      - name: Enviar artefato V1.25.17
+      - name: Enviar artefato V1.25.18
         uses: actions/upload-artifact@v4
         with:
-          name: ExtratorMaterias-Windows-Portable-V1.25.17
-          path: ExtratorMaterias-Windows-Portable-V1.25.17.zip
+          name: ExtratorMaterias-Windows-Portable-V1.25.18
+          path: ExtratorMaterias-Windows-Portable-V1.25.18.zip
           if-no-files-found: error
 
-      - name: Publicar Release V1.25.17
+      - name: Publicar Release V1.25.18
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.25.17
+          tag_name: v1.25.18
           target_commitish: main
-          name: Extrator de Matérias Windows Portable V1.25.17
+          name: Extrator de Matérias Windows Portable V1.25.18
           body: |
-            Versão Windows V1.25.17 com armazenamento persistente e protegido do acesso de assinante Valor / Globo.
-            - preserva integralmente o motor e as correções da V1.25.16;
-            - preserva a correção do botão Extrair matéria;
-            - preserva proxy corporativo e senha do proxy visível;
-            - adiciona área Acesso de assinante para Valor / Globo;
-            - usuário e senha são informados uma vez e permanecem cadastrados nas próximas aberturas;
-            - senha é criptografada com safeStorage do Electron/Windows antes de ser gravada;
-            - a tela não recebe novamente a senha descriptografada: mostra apenas que existe uma senha salva;
-            - inclui opção Apagar acesso salvo;
-            - usa identidade estável do aplicativo para manter o cofre entre versões futuras;
-            - esta versão prepara o armazenamento seguro; o uso da sessão autenticada no motor de extração será integrado separadamente.
-            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.17.zip
+            Versão Windows V1.25.18 com corretor ortográfico PT-BR na área Texto da matéria.
+            - preserva integralmente o motor e as correções da V1.25.17;
+            - preserva proxy, acesso de assinante salvo, histórico e edição;
+            - habilita o corretor ortográfico nativo do Electron/Chromium;
+            - prioriza o dicionário pt-BR disponível no Windows/Electron;
+            - palavras suspeitas ficam marcadas na área editável;
+            - botão direito mostra até 8 sugestões de correção;
+            - permite substituir a palavra pela sugestão escolhida;
+            - permite adicionar nomes próprios, siglas e termos ao dicionário;
+            - inclui Recortar, Copiar, Colar e Selecionar tudo no menu contextual;
+            - não envia o texto da matéria para serviço externo de revisão.
+            Arquivo: ExtratorMaterias-Windows-Portable-V1.25.18.zip
           prerelease: false
           make_latest: true
-          files: ExtratorMaterias-Windows-Portable-V1.25.17.zip
+          files: ExtratorMaterias-Windows-Portable-V1.25.18.zip

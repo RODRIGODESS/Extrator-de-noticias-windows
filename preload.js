@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('extratorAPI', {
   obterCredenciaisAssinante: (provedor) => ipcRenderer.invoke('obter-credenciais-assinante', provedor),
   salvarCredenciaisAssinante: (provedor, dados) => ipcRenderer.invoke('salvar-credenciais-assinante', provedor, dados),
   apagarCredenciaisAssinante: (provedor) => ipcRenderer.invoke('apagar-credenciais-assinante', provedor),
+  revisarTextoRigido: (texto) => ipcRenderer.invoke('revisar-texto-rigido', texto),
   onStatus: (callback) => ipcRenderer.on('extracao-status', (_event, mensagem) => callback(mensagem))
 });

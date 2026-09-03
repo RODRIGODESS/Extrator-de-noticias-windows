@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, clipboard, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, clipboard, safeStorage, Menu } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,6 +15,7 @@ const SEPARADOR = '\n' + '#'.repeat(70) + '\n\n';
 
 let mainWindow = null;
 let extractionBusy = false;
+let idiomaCorretor = 'pt-BR';
 
 function pastaDownload() {
   return path.join(app.getPath('downloads'), PASTA_NOME);
@@ -227,6 +228,69 @@ async function extrairMateriaGUI(opcoes) {
   }
 }
 
+function configurarCorretorOrtograficoPtBR(janela) {
+  const ses = janela.webContents.session;
+  try {
+    ses.setSpellCheckerEnabled(true);
+    const disponiveis = Array.isArray(ses.availableSpellCheckerLanguages)
+      ? ses.availableSpellCheckerLanguages
+      : [];
+
+    const exato = disponiveis.find(i => String(i).toLowerCase() === 'pt-br');
+    const portugues = disponiveis.find(i => /^pt(?:-|$)/i.test(String(i)));
+    const escolhido = exato || portugues || '';
+
+    if (escolhido) {
+      ses.setSpellCheckerLanguages([escolhido]);
+      idiomaCorretor = escolhido;
+    } else {
+      idiomaCorretor = 'pt-BR';
+    }
+  } catch (_) {
+    idiomaCorretor = 'pt-BR';
+  }
+
+  janela.webContents.on('context-menu', (_event, params) => {
+    if (!params.isEditable) return;
+
+    const template = [];
+    const palavra = String(params.misspelledWord || '').trim();
+    const sugestoes = Array.isArray(params.dictionarySuggestions)
+      ? params.dictionarySuggestions.slice(0, 8)
+      : [];
+
+    if (palavra) {
+      if (sugestoes.length) {
+        for (const sugestao of sugestoes) {
+          template.push({
+            label: sugestao,
+            click: () => janela.webContents.replaceMisspelling(sugestao)
+          });
+        }
+      } else {
+        template.push({ label: 'Sem sugestões de correção', enabled: false });
+      }
+
+      template.push({ type: 'separator' });
+      template.push({
+        label: `Adicionar “${palavra}” ao dicionário`,
+        click: () => janela.webContents.session.addWordToSpellCheckerDictionary(palavra)
+      });
+      template.push({ type: 'separator' });
+    }
+
+    template.push(
+      { role: 'cut', label: 'Recortar' },
+      { role: 'copy', label: 'Copiar' },
+      { role: 'paste', label: 'Colar' },
+      { type: 'separator' },
+      { role: 'selectAll', label: 'Selecionar tudo' }
+    );
+
+    Menu.buildFromTemplate(template).popup({ window: janela });
+  });
+}
+
 function criarJanelaPrincipal() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -240,9 +304,12 @@ function criarJanelaPrincipal() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: true,
+      spellcheck: true
     }
   });
+
+  configurarCorretorOrtograficoPtBR(mainWindow);
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.executeJavaScript(`
@@ -251,10 +318,11 @@ function criarJanelaPrincipal() {
         if (!resultado) return;
         resultado.contentEditable = 'true';
         resultado.spellcheck = true;
+        resultado.lang = 'pt-BR';
         resultado.setAttribute('role', 'textbox');
         resultado.setAttribute('aria-multiline', 'true');
-        resultado.setAttribute('aria-label', 'Conteúdo extraído editável. Você pode apagar, corrigir ou acrescentar texto antes de copiar.');
-        resultado.title = 'Clique aqui para editar o conteúdo antes de copiar';
+        resultado.setAttribute('aria-label', 'Conteúdo extraído editável com corretor ortográfico PT-BR. Você pode apagar, corrigir ou acrescentar texto antes de copiar.');
+        resultado.title = 'Editor com corretor ortográfico PT-BR. Clique com o botão direito em palavras sublinhadas para ver sugestões.';
       })();
     `).catch(() => {});
   });
@@ -303,6 +371,12 @@ ipcMain.handle('obter-estado', async () => ({
   historicoExiste: fs.existsSync(caminhoHistorico()),
   pasta: pastaDownload(),
   versaoMotor: motor.VERSAO,
+  corretorOrtografico: {
+    ativo: (() => {
+      try { return !!mainWindow?.webContents?.session?.isSpellCheckerEnabled(); } catch (_) { return false; }
+    })(),
+    idioma: idiomaCorretor
+  },
   proxyConfigurado: (() => {
     const c = carregarConfigProxyLocal();
     return !!(String(c.SERVIDOR || '').trim() && String(c.PORTA || '').trim());

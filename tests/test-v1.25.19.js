@@ -2,21 +2,24 @@ const assert = require('assert');
 const corretor = require('../engine/corretor-rigido-ptbr-v1.25.19.js');
 
 (async () => {
-  const texto = 'A materia foi publicada com uma noticia sobre a Marinha. O marinhe revisou o texto.';
+  const texto = 'A materia foi publicada com uma noticia. A analise citou o numero do periodo e tambem apontou o marinhe.';
   const issues = await corretor.revisarTexto(texto);
-  const palavras = issues.map(i => String(i.palavra || '').toLowerCase());
+  const palavras = issues.map(i => String(i.palavra || '').toLocaleLowerCase('pt-BR'));
 
-  assert(palavras.includes('marinhe'), 'O modo rígido deve marcar "marinhe" como suspeito.');
-  assert(palavras.includes('materia'), 'O modo rígido deve marcar "materia" sem acento.');
-  assert(palavras.includes('noticia'), 'O modo rígido deve marcar "noticia" sem acento.');
+  for (const esperada of ['marinhe', 'materia', 'noticia', 'analise', 'numero', 'periodo', 'tambem']) {
+    assert(palavras.includes(esperada), `O modo rígido deve marcar "${esperada}".`);
+  }
 
-  const materia = issues.find(i => String(i.palavra).toLowerCase() === 'materia');
-  const noticia = issues.find(i => String(i.palavra).toLowerCase() === 'noticia');
+  const porPalavra = palavra => issues.find(i => String(i.palavra || '').toLocaleLowerCase('pt-BR') === palavra);
+  assert(porPalavra('materia')?.sugestoes?.includes('matéria'), 'Deve sugerir "matéria" para materia.');
+  assert(porPalavra('noticia')?.sugestoes?.includes('notícia'), 'Deve sugerir "notícia" para noticia.');
+  assert(porPalavra('analise')?.sugestoes?.includes('análise'), 'Deve sugerir "análise" para analise.');
+  assert(porPalavra('numero')?.sugestoes?.includes('número'), 'Deve sugerir "número" para numero.');
+  assert(porPalavra('periodo')?.sugestoes?.includes('período'), 'Deve sugerir "período" para periodo.');
+  assert(porPalavra('tambem')?.sugestoes?.includes('também'), 'Deve sugerir "também" para tambem.');
+  assert(porPalavra('marinhe')?.sugestoes?.length, 'Deve sugerir correção para marinhe.');
 
-  assert(Array.isArray(materia?.sugestoes), 'A revisão deve retornar sugestões para materia.');
-  assert(Array.isArray(noticia?.sugestoes), 'A revisão deve retornar sugestões para noticia.');
-
-  console.log('OK - V1.25.19 marca marinhe e reforça acentuação PT-BR.');
+  console.log('OK - V1.25.19 marca grafia suspeita e reforça acentuação PT-BR em modo rígido.');
 })().catch(err => {
   console.error(err);
   process.exit(1);

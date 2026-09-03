@@ -5,6 +5,7 @@ const path = require('path');
 // V1.25.10 usa uma camada de correções sobre o motor V1.25.1.
 // O arquivo original permanece preservado e pode ser reutilizado sem alterações.
 const motor = require('./engine/extrator-materia-v1.25.10-runtime.js');
+const corretorRigido = require('./engine/corretor-rigido-ptbr-v1.25.19.js');
 
 const PASTA_NOME = 'ExtratorMaterias';
 const ARQUIVO_ULTIMO = 'materia-extraida.txt';
@@ -345,6 +346,25 @@ app.on('window-all-closed', () => {
 });
 
 ipcMain.handle('extrair-materia', async (_event, opcoes) => extrairMateriaGUI(opcoes));
+ipcMain.handle('revisar-texto-rigido', async (_event, texto) => {
+  try {
+    const issues = await corretorRigido.revisarTexto(String(texto || ''));
+    return {
+      ok: true,
+      issues,
+      total: issues.length,
+      idioma: 'pt-BR',
+      modo: 'rigido'
+    };
+  } catch (erro) {
+    return {
+      ok: false,
+      erro: erro?.message || String(erro),
+      issues: [],
+      total: 0
+    };
+  }
+});
 ipcMain.handle('obter-credenciais-assinante', async (_event, provedor) => {
   try {
     return obterResumoCredenciaisAssinante(provedor);
@@ -375,7 +395,8 @@ ipcMain.handle('obter-estado', async () => ({
     ativo: (() => {
       try { return !!mainWindow?.webContents?.session?.isSpellCheckerEnabled(); } catch (_) { return false; }
     })(),
-    idioma: idiomaCorretor
+    idioma: idiomaCorretor,
+    rigido: true
   },
   proxyConfigurado: (() => {
     const c = carregarConfigProxyLocal();

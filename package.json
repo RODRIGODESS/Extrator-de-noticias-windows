@@ -1,7 +1,7 @@
 {
-  "name": "extrator-materias-portable-v12517",
-  "version": "1.25.17",
-  "description": "Extrator de Materias Windows Portable V1.25.17 com acesso de assinante Valor Globo salvo com proteção local do Windows",
+  "name": "extrator-materias-portable-v12518",
+  "version": "1.25.18",
+  "description": "Extrator de Materias Windows Portable V1.25.18 com corretor ortografico PT-BR na area de conteudo",
   "main": "main.js",
   "author": "",
   "license": "UNLICENSED",
@@ -32,7 +32,7 @@
     ],
     "win": {
       "icon": "assets/extrator-materias-moderno.ico",
-      "artifactName": "ExtratorMateriasPortable-V1.25.17.exe",
+      "artifactName": "ExtratorMateriasPortable-V1.25.18.exe",
       "target": [
         {
           "target": "portable",
@@ -41,7 +41,7 @@
       ]
     },
     "portable": {
-      "artifactName": "ExtratorMateriasPortable-V1.25.17.exe"
+      "artifactName": "ExtratorMateriasPortable-V1.25.18.exe"
     }
   }
 }

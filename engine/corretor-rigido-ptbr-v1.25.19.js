@@ -6,7 +6,7 @@ function carregarCSpell() {
 }
 
 function caminhoDicionarioPtBr() {
-  return require.resolve('@cspell/dict-pt-br/cspell-ext.json');
+  return require.resolve('cspell-dict-pt-br/cspell-ext.json');
 }
 
 function normalizarSugestoes(issue) {
@@ -20,7 +20,7 @@ function ignorarIssue(issue) {
   if (palavra.length <= 1) return true;
   if (/^https?:\/\//i.test(palavra)) return true;
   if (/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/i.test(palavra)) return true;
-  if (/^[A-ZÀ-Ý0-9][A-ZÀ-Ý0-9._/-]{1,}$/.test(palavra)) return true; // siglas/códigos em caixa alta
+  if (/^[A-ZÀ-Ý0-9][A-ZÀ-Ý0-9._/-]{1,}$/.test(palavra)) return true;
   return false;
 }
 

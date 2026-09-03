@@ -1,7 +1,7 @@
 {
-  "name": "extrator-materias-portable-v12518",
-  "version": "1.25.18",
-  "description": "Extrator de Materias Windows Portable V1.25.18 com corretor ortografico PT-BR na area de conteudo",
+  "name": "extrator-materias-portable-v12519",
+  "version": "1.25.19",
+  "description": "Extrator de Materias Windows Portable V1.25.19 com corretor PT-BR rigido e acentuacao obrigatoria",
   "main": "main.js",
   "author": "",
   "license": "UNLICENSED",
@@ -10,7 +10,9 @@
     "dist": "electron-builder --win portable --x64"
   },
   "dependencies": {
+    "@cspell/dict-pt-br": "2.4.2",
     "@mozilla/readability": "^0.6.0",
+    "cspell-lib": "10.1.1",
     "jsdom": "^26.1.0",
     "undici": "7.29.0"
   },
@@ -32,7 +34,7 @@
     ],
     "win": {
       "icon": "assets/extrator-materias-moderno.ico",
-      "artifactName": "ExtratorMateriasPortable-V1.25.18.exe",
+      "artifactName": "ExtratorMateriasPortable-V1.25.19.exe",
       "target": [
         {
           "target": "portable",
@@ -41,7 +43,7 @@
       ]
     },
     "portable": {
-      "artifactName": "ExtratorMateriasPortable-V1.25.18.exe"
+      "artifactName": "ExtratorMateriasPortable-V1.25.19.exe"
     }
   }
 }

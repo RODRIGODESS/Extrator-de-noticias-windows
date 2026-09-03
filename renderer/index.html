@@ -4,8 +4,70 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <title>Extrator de Matérias V1.25.17</title>
+  <title>Extrator de Matérias V1.25.19</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    ::highlight(corretor-rigido-ptbr) {
+      text-decoration: underline wavy #ff6b7a 1.5px;
+      text-decoration-skip-ink: none;
+      background: rgba(255, 107, 122, .10);
+    }
+    .revisao-rigida-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 10px;
+      padding: 9px 10px;
+      border: 1px solid rgba(84,184,255,.18);
+      border-radius: 10px;
+      background: rgba(8,20,34,.52);
+    }
+    .revisao-rigida-toolbar .btn { min-height: 34px; padding: 0 11px; }
+    .revisao-rigida-status { color: var(--muted); font-size: 10.5px; line-height: 1.35; }
+    .revisao-rigida-lista {
+      display: grid;
+      gap: 6px;
+      margin: 0 0 10px;
+      max-height: 178px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+    .revisao-issue {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 7px 8px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,107,122,.18);
+      background: rgba(255,107,122,.055);
+    }
+    .revisao-palavra,
+    .revisao-sugestao {
+      border-radius: 7px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .revisao-palavra {
+      border: 1px solid rgba(255,107,122,.35);
+      background: rgba(255,107,122,.10);
+      color: #ffd5da;
+      padding: 4px 7px;
+      font-weight: 700;
+      text-decoration: underline wavy #ff6b7a;
+    }
+    .revisao-sugestoes { display: flex; gap: 5px; flex-wrap: wrap; }
+    .revisao-sugestao {
+      border: 1px solid #2d4968;
+      background: #0c1a2b;
+      color: #b9dbff;
+      padding: 4px 7px;
+    }
+    .revisao-sugestao:hover { border-color: #4b99ff; color: #fff; }
+    .revisao-sem-sugestao, .revisao-mais { color: var(--muted-2); font-size: 10px; }
+    .revisao-mais { padding: 3px 7px; }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -54,7 +116,7 @@
           <span class="shield" aria-hidden="true">◇</span>
           <span>Motor de Extração</span>
         </div>
-        <strong id="versaoSidebar">V1.25.17</strong>
+        <strong id="versaoSidebar">V1.25.19</strong>
         <small>Estrutura antiga preservada</small>
       </section>
     </aside>
@@ -223,13 +285,19 @@
             <span id="info" class="content-info">Nenhuma matéria extraída</span>
           </div>
 
+          <div class="revisao-rigida-toolbar">
+            <button id="revisarRigido" class="btn btn-ghost" type="button" disabled>✓ Revisar PT-BR rígido</button>
+            <span id="revisaoRigidaStatus" class="revisao-rigida-status">Modo rígido aguardando texto.</span>
+          </div>
+          <div id="revisaoRigidaLista" class="revisao-rigida-lista oculto" aria-live="polite"></div>
+
           <div class="result-wrap">
             <div id="resultadoVazio" class="empty-state">
               <div class="empty-icon" aria-hidden="true">▧</div>
               <strong>O conteúdo aparecerá aqui</strong>
               <span>Informe um link acima e clique em “Extrair matéria”.</span>
             </div>
-            <pre id="resultado" class="resultado" tabindex="0" aria-label="Conteúdo extraído da matéria"></pre>
+            <pre id="resultado" class="resultado" lang="pt-BR" spellcheck="true" tabindex="0" aria-label="Conteúdo extraído da matéria"></pre>
           </div>
         </article>
       </section>
@@ -255,7 +323,7 @@
 
       <footer class="footer-bar">
         <span><span class="footer-dot" aria-hidden="true"></span> Interface otimizada para Windows</span>
-        <span id="versao">Motor V1.25.17</span>
+        <span id="versao">Motor V1.25.19</span>
       </footer>
     </main>
   </div>
